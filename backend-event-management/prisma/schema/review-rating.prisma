@@ -1,0 +1,21 @@
+// ============================================
+// Review & Rating Models
+// ============================================
+
+model Review {
+  id         String   @id @default(uuid())
+  rating     Int // 1-5 stars
+  comment    String?
+  eventId    String? // Optional: review can be for event or host
+  reviewerId String // UserProfile email (who gave the review)
+  hostId     String // Host email (who received the review)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isDeleted  Boolean  @default(false)
+
+  // Relations
+  reviewer User @relation(fields: [reviewerId], references: [id])
+  host     Host @relation(fields: [hostId], references: [email])
+
+  @@map("reviews")
+}

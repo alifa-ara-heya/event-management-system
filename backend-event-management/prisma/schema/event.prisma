@@ -1,0 +1,66 @@
+// ============================================
+// Event Models
+// ============================================
+
+model Event {
+  id                  String      @id @default(uuid())
+  name                String
+  type                EventType
+  description         String?
+  date                DateTime
+  location            String
+  minParticipants     Int         @default(1)
+  maxParticipants     Int
+  currentParticipants Int         @default(0)
+  joiningFee          Float       @default(0.0)
+  status              EventStatus @default(OPEN)
+  image               String? // Cloudinary/ImgBB URL
+  isDeleted           Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  hostId       String
+  host         Host               @relation(fields: [hostId], references: [id])
+  participants EventParticipant[]
+  payments     Payment[]
+
+  @@map("events")
+}
+
+model EventParticipant {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String // UserProfile email
+  joinedAt  DateTime @default(now())
+  isDeleted Boolean  @default(false)
+
+  // Relations
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [email], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_participants")
+}
+
+// ============================================
+// Payment Models
+// ============================================
+
+model Payment {
+  id                 String        @id @default(uuid())
+  eventId            String
+  userId             String // UserProfile email
+  amount             Float
+  transactionId      String        @unique
+  status             PaymentStatus @default(UNPAID)
+  paymentGatewayData Json?
+  paidAt             DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  // // Relations
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}

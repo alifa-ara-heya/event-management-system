@@ -1,0 +1,64 @@
+// ============================================
+// User Models
+// ============================================
+
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  password           String
+  role               UserRole   @default(USER)
+  needPasswordChange Boolean    @default(true)
+  isDeleted          Boolean    @default(false)
+  status             UserStatus @default(ACTIVE)
+  bio                String?
+  location           String? // City/Area
+  interests          String[] // Array of interests like ["Music", "Sports", "Gaming", "Art"]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  // Relations
+  host              Host?
+  admin             Admin?
+  eventParticipants EventParticipant[]
+  reviews           Review[]
+
+  @@map("users")
+}
+
+model Host {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  profilePhoto  String?
+  contactNumber String?
+  bio           String?
+  location      String? // City/Area
+  averageRating Float    @default(0.0)
+  totalRevenue  Float    @default(0.0) // Track payments received
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [email], references: [email])
+  hostedEvents Event[] // Events created by this host
+  reviews      Review[] // Reviews received by this host
+
+  @@map("hosts")
+}
+
+model Admin {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  profilePhoto  String?
+  contactNumber String?
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [email], references: [email])
+
+  @@map("admins")
+}

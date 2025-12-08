@@ -1,0 +1,45 @@
+// ============================================
+// Enums
+// ============================================
+
+enum UserRole {
+  USER
+  HOST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum EventStatus {
+  OPEN
+  FULL
+  CANCELLED
+  COMPLETED
+}
+
+enum EventType {
+  CONCERT
+  HIKE
+  DINNER
+  GAMING
+  SPORTS
+  ART
+  TECH_MEETUP
+  OTHER
+}
+
+// enum PaymentStatus {
+//     PENDING
+//     COMPLETED
+//     FAILED
+//     REFUNDED
+// }
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+}
