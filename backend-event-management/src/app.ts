@@ -2,6 +2,10 @@ import express, { type Application, type Request, type Response } from 'express'
 import cors from 'cors';
 import cookieParser from 'cookie-parser'
 import config from './config';
+// import routes from './app/routes';
+import globalErrorHandler from './app/middlewares/globalErrorHandler';
+import router from './app/routes';
+import notFound from './app/middlewares/notFound';
 
 
 const app: Application = express()
@@ -24,5 +28,13 @@ app.get('/', (req: Request, res: Response) => {
         timeStamp: new Date().toISOString()
     })
 });
+
+// Application routes
+app.use('/api/v1', router);
+
+// Global error handler
+app.use(globalErrorHandler);
+
+app.use(notFound);
 
 export default app;

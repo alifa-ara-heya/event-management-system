@@ -1,11 +1,12 @@
 import express from "express";
+import { userRoutes } from "../modules/user/user.routes";
 
 const router = express.Router();
 
 const moduleRoutes = [
     {
         path: '/user',
-        // route: userRoutes
+        route: userRoutes
     },
     {
         path: "/auth",
@@ -25,6 +26,10 @@ const moduleRoutes = [
     }
 ]
 
-moduleRoutes.forEach(route => router.use(route.path, route.route))
+moduleRoutes.forEach(route => {
+    if (route.route) {
+        router.use(route.path, route.route)
+    }
+})
 
 export default router;

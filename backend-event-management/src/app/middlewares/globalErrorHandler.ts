@@ -1,7 +1,9 @@
 // import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express"
 import httpStatus from "http-status"
-import { Prisma } from "../../../generated/prisma/client";
+import { ZodError } from "zod";
+// import { Prisma } from "../../../generated/prisma/client";
 
 const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
 
@@ -9,6 +11,12 @@ const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFun
     let success = false;
     let message = err.message || "Something went wrong!";
     let error = err;
+
+    if (err instanceof ZodError) {
+        statusCode = httpStatus.BAD_REQUEST;
+        message = err.issues[0]?.message || "Validation failed";
+        error = err.issues;
+    }
 
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
         if (err.code === "P2002") {
@@ -34,7 +42,7 @@ const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFun
             statusCode = httpStatus.BAD_REQUEST
     }
     else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
-        message = "Unknown Prisma error occured!",
+        message = "Unknown Prisma error occurred!",
             error = err.message,
             statusCode = httpStatus.BAD_REQUEST
     }

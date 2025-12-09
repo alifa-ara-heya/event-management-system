@@ -10,6 +10,7 @@ model User {
   needPasswordChange Boolean    @default(true)
   isDeleted          Boolean    @default(false)
   status             UserStatus @default(ACTIVE)
+  profilePhoto       String?
   bio                String?
   location           String? // City/Area
   interests          String[] // Array of interests like ["Music", "Sports", "Gaming", "Art"]
