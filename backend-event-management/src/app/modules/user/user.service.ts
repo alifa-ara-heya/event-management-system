@@ -26,6 +26,7 @@ const createUser = async (req: Request): Promise<User> => {
         email: req.body.email,
         password: hashPassword,
         role: UserRole.USER, // Default role for regular users
+        name: req.body.name,
         profilePhoto: req.body.profilePhoto,
         bio: req.body.bio,
         location: req.body.location,
@@ -70,7 +71,7 @@ const createAdmin = async (req: Request): Promise<Admin> => {
 };
 
 // creating host
-const createHost = async (req: Request): Promise<Host> => {
+const createHost = async (req: Request): Promise<any> => {
     if (req.file) {
         const uploadResult = await fileUploader.uploadToCloudinary(req.file);
         req.body.host.profilePhoto = uploadResult?.secure_url;
@@ -81,7 +82,12 @@ const createHost = async (req: Request): Promise<Host> => {
     const userData = {
         email: req.body.host.email,
         password: hashPassword,
-        role: UserRole.HOST
+        role: UserRole.HOST,
+        name: req.body.host.name,
+        bio: req.body.host.bio,
+        location: req.body.host.location,
+        profilePhoto: req.body.host.profilePhoto,
+        interests: req.body.host.interests || []
     };
 
     const result = await prisma.$transaction(async (tnx) => {
@@ -96,7 +102,23 @@ const createHost = async (req: Request): Promise<Host> => {
         return createdHostData;
     });
 
-    return result;
+    // Fetch the host with user relation to get interests
+    const hostWithUser = await prisma.host.findUnique({
+        where: { email: result.email },
+        include: {
+            user: {
+                select: {
+                    interests: true
+                }
+            }
+        }
+    });
+
+    // Return host data with interests
+    return {
+        ...result,
+        interests: hostWithUser?.user?.interests || []
+    };
 };
 
 const getMyProfile = async (user: IJWTPayload) => {
@@ -108,6 +130,7 @@ const getMyProfile = async (user: IJWTPayload) => {
         select: {
             id: true,
             email: true,
+            name: true,
             needPasswordChange: true,
             role: true,
             status: true,
@@ -123,6 +146,7 @@ const getMyProfile = async (user: IJWTPayload) => {
     if (userInfo.role === UserRole.USER) {
         // For regular users, profile data is in the User model itself
         profileData = {
+            name: userInfo.name,
             bio: userInfo.bio,
             location: userInfo.location,
             interests: userInfo.interests,
@@ -167,17 +191,19 @@ const updateMyProfile = async (user: IJWTPayload, req: Request) => {
 
     if (userInfo.role === UserRole.USER) {
         // Update User model directly for regular users
-        // User model fields: bio, location, interests, profilePhoto
+        // User model fields: name, bio, location, interests, profilePhoto
+        const updateData: any = {};
+        if (req.body.name !== undefined) updateData.name = req.body.name;
+        if (req.body.bio !== undefined) updateData.bio = req.body.bio;
+        if (req.body.location !== undefined) updateData.location = req.body.location;
+        if (req.body.interests !== undefined) updateData.interests = req.body.interests;
+        if (req.body.profilePhoto !== undefined) updateData.profilePhoto = req.body.profilePhoto;
+
         profileInfo = await prisma.user.update({
             where: {
                 email: userInfo.email
             },
-            data: {
-                bio: req.body.bio,
-                location: req.body.location,
-                interests: req.body.interests,
-                profilePhoto: req.body.profilePhoto
-            }
+            data: updateData
         });
     } else if (userInfo.role === UserRole.ADMIN) {
         // Admin model fields: name, contactNumber, profilePhoto

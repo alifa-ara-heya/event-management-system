@@ -8,6 +8,7 @@ const createUserValidationSchema = z.object({
     email: z.email({
         error: "Email is required."
     }),
+    name: z.string().optional(),
     bio: z.string().optional(),
     location: z.string().optional(),
     interests: z.array(z.string()).optional()
@@ -41,7 +42,8 @@ const createHostValidationSchema = z.object({
         }),
         contactNumber: z.string().optional(),
         bio: z.string().optional(),
-        location: z.string().optional()
+        location: z.string().optional(),
+        interests: z.array(z.string()).optional()
     })
 });
 
