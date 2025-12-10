@@ -37,9 +37,84 @@ const createHost = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getMyProfile = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const result = await UserService.getMyProfile(user);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Profile retrieved successfully",
+        data: result
+    });
+});
+
+const updateMyProfile = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const result = await UserService.updateMyProfile(user, req);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Profile updated successfully",
+        data: result
+    });
+});
+
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+    // Separate pagination options from filter params
+    const { page, limit, sortBy, sortOrder, ...filterParams } = req.query;
+
+    const paginationOptions = {
+        page,
+        limit,
+        sortBy,
+        sortOrder
+    };
+
+    const result = await UserService.getAllUsers(filterParams, paginationOptions);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Users retrieved successfully",
+        meta: result.meta,
+        data: result.data
+    });
+});
+
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await UserService.deleteUser(id);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User deleted successfully",
+        data: result
+    });
+});
+
+const changeUserStatus = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await UserService.changeUserStatus(id, req.body);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User status updated successfully",
+        data: result
+    });
+});
+
 export const UserController = {
     createUser,
     createAdmin,
-    createHost
+    createHost,
+    getMyProfile,
+    updateMyProfile,
+    getAllUsers,
+    deleteUser,
+    changeUserStatus
 };
 

@@ -1,4 +1,5 @@
 import z from "zod";
+import { UserStatus } from "@prisma/client";
 
 const createUserValidationSchema = z.object({
     password: z.string({
@@ -44,9 +45,25 @@ const createHostValidationSchema = z.object({
     })
 });
 
+const updateMyProfileValidationSchema = z.object({
+    bio: z.string().optional(),
+    location: z.string().optional(),
+    interests: z.array(z.string()).optional(),
+    name: z.string().optional(),
+    contactNumber: z.string().optional()
+});
+
+const changeUserStatusValidationSchema = z.object({
+    status: z.nativeEnum(UserStatus, {
+        error: "Status must be ACTIVE, INACTIVE, or DELETED."
+    })
+});
+
 export const UserValidation = {
     createUserValidationSchema,
     createAdminValidationSchema,
-    createHostValidationSchema
+    createHostValidationSchema,
+    updateMyProfileValidationSchema,
+    changeUserStatusValidationSchema
 };
 
