@@ -364,9 +364,13 @@ const getHostById = async (id: string) => {
         }
     });
 
+    // Clean up response: merge interests and remove duplicate user data
+    const { user, ...hostData } = host;
     return {
-        ...host,
-        interests: host.user.interests || []
+        ...hostData,
+        interests: user.interests || [],
+        userId: user.id, // Keep user ID for reference
+        userStatus: user.status // Keep user status
     };
 };
 
