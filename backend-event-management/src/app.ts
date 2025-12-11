@@ -6,9 +6,17 @@ import config from './config';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './app/routes';
 import notFound from './app/middlewares/notFound';
+import { PaymentController } from './app/modules/payment/payment.controller';
 
 
 const app: Application = express()
+
+// Stripe webhook must be before express.json() middleware
+app.post(
+    "/webhook",
+    express.raw({ type: "application/json" }),
+    PaymentController.handleStripeWebhookEvent
+);
 
 app.use(cors({
     origin: 'http://localhost:3000',
