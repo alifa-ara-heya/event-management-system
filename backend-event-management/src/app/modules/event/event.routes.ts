@@ -102,5 +102,19 @@ router.delete(
     EventController.deleteEvent
 );
 
+// Get event participants (Host only - own events)
+router.get(
+    "/:id/participants",
+    auth(UserRole.HOST),
+    EventController.getEventParticipants
+);
+
+// Remove participant from event (Host only - own events)
+router.delete(
+    "/:id/participants/:participantId",
+    auth(UserRole.HOST),
+    EventController.removeEventParticipant
+);
+
 export const eventRoutes = router;
 

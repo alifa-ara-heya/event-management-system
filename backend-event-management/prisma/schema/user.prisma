@@ -14,7 +14,7 @@ model User {
   profilePhoto       String?
   bio                String?
   location           String? // City/Area
-  interests          String[] // Array of interests like ["Music", "Sports", "Gaming", "Art"]
+  interests          String[]   @default([]) // Array of interests like ["Music", "Sports", "Gaming", "Art"]
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -36,6 +36,7 @@ model Host {
   contactNumber String?
   bio           String?
   location      String? // City/Area
+  interests     String[] @default([]) // Array of interests like ["Music", "Sports", "Gaming", "Art"]
   averageRating Float    @default(0.0)
   totalRevenue  Float    @default(0.0) // Track payments received
   isDeleted     Boolean  @default(false)

@@ -2,7 +2,7 @@ import { Request } from "express";
 import bcrypt from "bcryptjs";
 import { fileUploader } from "../../helpers/fileUploader";
 import config from "../../../config";
-import { User, UserRole, UserStatus, Admin, Host, Prisma } from "@prisma/client";
+import { User, UserRole, UserStatus, Admin, Host, Prisma, EventStatus, EventType } from "@prisma/client";
 import { prisma } from "src/app/shared/prisma";
 import { IJWTPayload } from "../../types/common";
 import { calculatePagination } from "../../helpers/paginationHelper";
@@ -30,7 +30,7 @@ const createUser = async (req: Request): Promise<User> => {
         profilePhoto: req.body.profilePhoto,
         bio: req.body.bio,
         location: req.body.location,
-        interests: req.body.interests || [], // Array of interests
+        interests: req.body.interests ?? [], // Array of interests (optional, defaults to empty array)
     };
 
     const result = await prisma.user.create({
@@ -86,8 +86,8 @@ const createHost = async (req: Request): Promise<any> => {
         name: req.body.host.name,
         bio: req.body.host.bio,
         location: req.body.host.location,
-        profilePhoto: req.body.host.profilePhoto,
-        interests: req.body.host.interests || []
+        profilePhoto: req.body.host.profilePhoto
+        // Note: interests are now stored in Host model, not User model
     };
 
     const result = await prisma.$transaction(async (tnx) => {
@@ -95,30 +95,18 @@ const createHost = async (req: Request): Promise<any> => {
             data: userData
         });
 
+        // Create host with all data including interests (now stored in Host model)
         const createdHostData = await tnx.host.create({
-            data: req.body.host
+            data: {
+                ...req.body.host,
+                interests: req.body.host.interests ?? []
+            }
         });
 
         return createdHostData;
     });
 
-    // Fetch the host with user relation to get interests
-    const hostWithUser = await prisma.host.findUnique({
-        where: { email: result.email },
-        include: {
-            user: {
-                select: {
-                    interests: true
-                }
-            }
-        }
-    });
-
-    // Return host data with interests
-    return {
-        ...result,
-        interests: hostWithUser?.user?.interests || []
-    };
+    return result;
 };
 
 const getMyProfile = async (user: IJWTPayload) => {
@@ -231,8 +219,7 @@ const updateMyProfile = async (user: IJWTPayload, req: Request) => {
             }
         });
     } else if (userInfo.role === UserRole.HOST) {
-        // Host model fields: name, contactNumber, bio, location, profilePhoto
-        // User model fields: interests (interests are stored in User model, not Host model)
+        // Host model fields: name, contactNumber, bio, location, profilePhoto, interests
         // Use upsert to create if doesn't exist, update if exists
         const existingHost = await prisma.host.findUnique({
             where: { email: userInfo.email }
@@ -244,6 +231,7 @@ const updateMyProfile = async (user: IJWTPayload, req: Request) => {
         if (req.body.bio !== undefined) hostUpdateData.bio = req.body.bio;
         if (req.body.location !== undefined) hostUpdateData.location = req.body.location;
         if (req.body.profilePhoto !== undefined) hostUpdateData.profilePhoto = req.body.profilePhoto;
+        if (req.body.interests !== undefined) hostUpdateData.interests = req.body.interests;
 
         // Update Host model
         profileInfo = await prisma.host.upsert({
@@ -257,30 +245,10 @@ const updateMyProfile = async (user: IJWTPayload, req: Request) => {
                 contactNumber: req.body.contactNumber,
                 bio: req.body.bio,
                 location: req.body.location,
-                profilePhoto: req.body.profilePhoto
+                profilePhoto: req.body.profilePhoto,
+                interests: req.body.interests ?? []
             }
         });
-
-        // Update User model for interests (if provided)
-        if (req.body.interests !== undefined) {
-            await prisma.user.update({
-                where: {
-                    email: userInfo.email
-                },
-                data: {
-                    interests: req.body.interests
-                }
-            });
-        }
-    }
-
-    // For HOST, also return interests from User model
-    if (userInfo.role === UserRole.HOST) {
-        const userData = await prisma.user.findUnique({
-            where: { email: userInfo.email },
-            select: { interests: true }
-        });
-        return { ...profileInfo, interests: userData?.interests || [] };
     }
 
     return { ...profileInfo };
@@ -484,14 +452,433 @@ const changeUserStatus = async (id: string, payload: { status: UserStatus }) => 
     return updateUserStatus;
 };
 
+/**
+ * Get public user profile by ID (Public)
+ */
+const getUserProfileById = async (userId: string) => {
+    const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId, isDeleted: false, status: UserStatus.ACTIVE },
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            profilePhoto: true,
+            bio: true,
+            location: true,
+            interests: true,
+            role: true,
+            createdAt: true,
+            host: {
+                select: {
+                    id: true,
+                    name: true,
+                    profilePhoto: true,
+                    bio: true,
+                    location: true,
+                    contactNumber: true,
+                    averageRating: true,
+                    totalRevenue: true,
+                    _count: {
+                        select: {
+                            hostedEvents: true,
+                            reviews: true
+                        }
+                    }
+                }
+            },
+            _count: {
+                select: {
+                    eventParticipants: true,
+                    reviews: true
+                }
+            }
+        }
+    });
+
+    // Merge host data if user is a host
+    if (user.role === UserRole.HOST && user.host) {
+        return {
+            ...user,
+            ...user.host,
+            hostedEventsCount: user.host._count.hostedEvents,
+            reviewsCount: user.host._count.reviews,
+            joinedEventsCount: user._count.eventParticipants,
+            myReviewsCount: user._count.reviews
+        };
+    }
+
+    return {
+        ...user,
+        joinedEventsCount: user._count.eventParticipants,
+        reviewsCount: user._count.reviews
+    };
+};
+
+/**
+ * Get my joined events (User only - events I've joined)
+ */
+const getMyJoinedEvents = async (user: IJWTPayload, params: any, options: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+    const { status, type, ...filterData } = params;
+
+    const andConditions: Prisma.EventParticipantWhereInput[] = [
+        { userId: user.email },
+        { isDeleted: false }
+    ];
+
+    // Filter by event status
+    if (status) {
+        andConditions.push({
+            event: {
+                status: status as EventStatus
+            }
+        });
+    }
+
+    // Filter by event type
+    if (type) {
+        andConditions.push({
+            event: {
+                type: type as EventType
+            }
+        });
+    }
+
+    const whereConditions: Prisma.EventParticipantWhereInput =
+        andConditions.length > 0 ? { AND: andConditions } : { userId: user.email, isDeleted: false };
+
+    const result = await prisma.eventParticipant.findMany({
+        skip,
+        take: limit,
+        where: whereConditions,
+        orderBy: {
+            event: {
+                [sortBy]: sortOrder
+            }
+        },
+        include: {
+            event: {
+                include: {
+                    host: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePhoto: true,
+                            averageRating: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            participants: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const total = await prisma.eventParticipant.count({ where: whereConditions });
+
+    // Transform result to include event data at root level
+    const transformedData = result.map(participant => ({
+        ...participant.event,
+        joinedAt: participant.joinedAt,
+        participantId: participant.id
+    }));
+
+    return {
+        meta: { page, limit, total },
+        data: transformedData
+    };
+};
+
+/**
+ * Get my upcoming events (User only - events I've joined that are in the future)
+ */
+const getMyUpcomingEvents = async (user: IJWTPayload, params: any, options: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+    const now = new Date();
+
+    const whereConditions: Prisma.EventParticipantWhereInput = {
+        userId: user.email,
+        isDeleted: false,
+        event: {
+            isDeleted: false,
+            date: { gte: now },
+            status: { not: EventStatus.CANCELLED }
+        }
+    };
+
+    // Default sort by event date
+    const validSortBy = ['date', 'createdAt', 'name'].includes(sortBy) ? sortBy : 'date';
+    const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const result = await prisma.eventParticipant.findMany({
+        skip,
+        take: limit,
+        where: whereConditions,
+        orderBy: validSortBy === 'date'
+            ? { event: { date: validSortOrder } }
+            : validSortBy === 'createdAt'
+                ? { event: { createdAt: validSortOrder } }
+                : validSortBy === 'name'
+                    ? { event: { name: validSortOrder } }
+                    : { joinedAt: 'desc' },
+        include: {
+            event: {
+                include: {
+                    host: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePhoto: true,
+                            averageRating: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            participants: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const total = await prisma.eventParticipant.count({ where: whereConditions });
+
+    const transformedData = result.map(participant => ({
+        ...participant.event,
+        joinedAt: participant.joinedAt,
+        participantId: participant.id
+    }));
+
+    return {
+        meta: { page, limit, total },
+        data: transformedData
+    };
+};
+
+/**
+ * Get my past events (User only - events I've joined that are in the past or completed)
+ */
+const getMyPastEvents = async (user: IJWTPayload, params: any, options: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+    const now = new Date();
+
+    const whereConditions: Prisma.EventParticipantWhereInput = {
+        userId: user.email,
+        isDeleted: false,
+        event: {
+            isDeleted: false,
+            OR: [
+                { date: { lt: now } },
+                { status: EventStatus.COMPLETED }
+            ]
+        }
+    };
+
+    // Default sort by event date (desc for past events - most recent first)
+    const validSortBy = ['date', 'createdAt', 'name'].includes(sortBy) ? sortBy : 'date';
+    const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const result = await prisma.eventParticipant.findMany({
+        skip,
+        take: limit,
+        where: whereConditions,
+        orderBy: validSortBy === 'date'
+            ? { event: { date: validSortOrder } }
+            : validSortBy === 'createdAt'
+                ? { event: { createdAt: validSortOrder } }
+                : validSortBy === 'name'
+                    ? { event: { name: validSortOrder } }
+                    : { joinedAt: 'desc' },
+        include: {
+            event: {
+                include: {
+                    host: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePhoto: true,
+                            averageRating: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            participants: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const total = await prisma.eventParticipant.count({ where: whereConditions });
+
+    const transformedData = result.map(participant => ({
+        ...participant.event,
+        joinedAt: participant.joinedAt,
+        participantId: participant.id
+    }));
+
+    return {
+        meta: { page, limit, total },
+        data: transformedData
+    };
+};
+
+/**
+ * Get user dashboard statistics
+ */
+const getMyDashboardStats = async (user: IJWTPayload) => {
+    const now = new Date();
+
+    // Get user ID first (needed for reviews query)
+    const userData = await prisma.user.findUniqueOrThrow({
+        where: { email: user.email },
+        select: { id: true }
+    });
+
+    const [
+        totalJoinedEvents,
+        upcomingEvents,
+        pastEvents,
+        totalReviews,
+        upcomingEventsList,
+        recentJoinedEvents
+    ] = await Promise.all([
+        prisma.eventParticipant.count({
+            where: {
+                userId: user.email,
+                isDeleted: false
+            }
+        }),
+        prisma.eventParticipant.count({
+            where: {
+                userId: user.email,
+                isDeleted: false,
+                event: {
+                    isDeleted: false,
+                    date: { gte: now },
+                    status: { not: EventStatus.CANCELLED }
+                }
+            }
+        }),
+        prisma.eventParticipant.count({
+            where: {
+                userId: user.email,
+                isDeleted: false,
+                event: {
+                    isDeleted: false,
+                    OR: [
+                        { date: { lt: now } },
+                        { status: EventStatus.COMPLETED }
+                    ]
+                }
+            }
+        }),
+        prisma.review.count({
+            where: {
+                reviewerId: userData.id,
+                isDeleted: false
+            }
+        }),
+        prisma.eventParticipant.findMany({
+            where: {
+                userId: user.email,
+                isDeleted: false,
+                event: {
+                    isDeleted: false,
+                    date: { gte: now },
+                    status: { not: EventStatus.CANCELLED }
+                }
+            },
+            take: 5,
+            orderBy: {
+                event: {
+                    date: 'asc'
+                }
+            },
+            include: {
+                event: {
+                    select: {
+                        id: true,
+                        name: true,
+                        date: true,
+                        location: true,
+                        image: true,
+                        host: {
+                            select: {
+                                name: true,
+                                profilePhoto: true
+                            }
+                        }
+                    }
+                }
+            }
+        }),
+        prisma.eventParticipant.findMany({
+            where: {
+                userId: user.email,
+                isDeleted: false
+            },
+            take: 5,
+            orderBy: { joinedAt: 'desc' },
+            include: {
+                event: {
+                    select: {
+                        id: true,
+                        name: true,
+                        date: true,
+                        location: true,
+                        image: true,
+                        host: {
+                            select: {
+                                name: true,
+                                profilePhoto: true
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    ]);
+
+    return {
+        overview: {
+            totalJoinedEvents,
+            upcomingEvents,
+            pastEvents,
+            totalReviews
+        },
+        upcomingEvents: upcomingEventsList.map(ep => ({
+            ...ep.event,
+            joinedAt: ep.joinedAt
+        })),
+        recentJoinedEvents: recentJoinedEvents.map(ep => ({
+            ...ep.event,
+            joinedAt: ep.joinedAt
+        }))
+    };
+};
+
 export const UserService = {
     createUser,
     createAdmin,
     createHost,
     getMyProfile,
+    getUserProfileById,
     updateMyProfile,
     getAllUsers,
     deleteUser,
-    changeUserStatus
+    changeUserStatus,
+    getMyJoinedEvents,
+    getMyUpcomingEvents,
+    getMyPastEvents,
+    getMyDashboardStats
 };
 

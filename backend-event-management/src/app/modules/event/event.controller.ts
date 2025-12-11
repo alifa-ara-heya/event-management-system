@@ -110,6 +110,45 @@ const updateEventStatus = catchAsync(async (req: Request & { user?: any }, res: 
     });
 });
 
+const getEventParticipants = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { id } = req.params;
+    const { page, limit, sortBy, sortOrder } = req.query;
+
+    const paginationOptions = {
+        page: page as string | number | undefined,
+        limit: limit as string | number | undefined,
+        sortBy: sortBy as string | undefined,
+        sortOrder: sortOrder as string | undefined
+    };
+
+    const result = await EventService.getEventParticipants(user, id, paginationOptions);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Event participants retrieved successfully",
+        meta: result.meta,
+        data: {
+            participants: result.data,
+            event: result.event
+        }
+    });
+});
+
+const removeEventParticipant = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { id, participantId } = req.params;
+    const result = await EventService.removeEventParticipant(user, id, participantId);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: result.message,
+        data: result
+    });
+});
+
 export const EventController = {
     createEvent,
     getAllEvents,
@@ -117,6 +156,8 @@ export const EventController = {
     updateEvent,
     deleteEvent,
     getMyEvents,
-    updateEventStatus
+    updateEventStatus,
+    getEventParticipants,
+    removeEventParticipant
 };
 

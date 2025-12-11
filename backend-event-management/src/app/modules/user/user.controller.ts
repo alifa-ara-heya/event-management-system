@@ -107,14 +107,109 @@ const changeUserStatus = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getMyJoinedEvents = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { page, limit, sortBy, sortOrder, ...filterParams } = req.query;
+
+    const paginationOptions = {
+        page: page as string | number | undefined,
+        limit: limit as string | number | undefined,
+        sortBy: sortBy as string | undefined,
+        sortOrder: sortOrder as string | undefined
+    };
+
+    const result = await UserService.getMyJoinedEvents(user, filterParams, paginationOptions);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My joined events retrieved successfully",
+        meta: result.meta,
+        data: result.data
+    });
+});
+
+const getMyUpcomingEvents = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { page, limit, sortBy, sortOrder, ...filterParams } = req.query;
+
+    const paginationOptions = {
+        page: page as string | number | undefined,
+        limit: limit as string | number | undefined,
+        sortBy: sortBy as string | undefined,
+        sortOrder: sortOrder as string | undefined
+    };
+
+    const result = await UserService.getMyUpcomingEvents(user, filterParams, paginationOptions);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My upcoming events retrieved successfully",
+        meta: result.meta,
+        data: result.data
+    });
+});
+
+const getMyPastEvents = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { page, limit, sortBy, sortOrder, ...filterParams } = req.query;
+
+    const paginationOptions = {
+        page: page as string | number | undefined,
+        limit: limit as string | number | undefined,
+        sortBy: sortBy as string | undefined,
+        sortOrder: sortOrder as string | undefined
+    };
+
+    const result = await UserService.getMyPastEvents(user, filterParams, paginationOptions);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My past events retrieved successfully",
+        meta: result.meta,
+        data: result.data
+    });
+});
+
+const getUserProfileById = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await UserService.getUserProfileById(id);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User profile retrieved successfully",
+        data: result
+    });
+});
+
+const getMyDashboardStats = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const result = await UserService.getMyDashboardStats(user);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Dashboard statistics retrieved successfully",
+        data: result
+    });
+});
+
 export const UserController = {
     createUser,
     createAdmin,
     createHost,
     getMyProfile,
+    getUserProfileById,
     updateMyProfile,
     getAllUsers,
     deleteUser,
-    changeUserStatus
+    changeUserStatus,
+    getMyJoinedEvents,
+    getMyUpcomingEvents,
+    getMyPastEvents,
+    getMyDashboardStats
 };
 

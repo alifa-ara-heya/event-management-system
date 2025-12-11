@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { fileUploader } from "../../helpers/fileUploader";
 import { prisma } from "../../shared/prisma";
-import { Host, HostRequest, HostRequestStatus, Prisma, UserRole, UserStatus } from "@prisma/client";
+import { Host, HostRequest, HostRequestStatus, Prisma, UserRole, UserStatus, PaymentStatus } from "@prisma/client";
 import { IJWTPayload } from "../../types/common";
 import { calculatePagination } from "../../helpers/paginationHelper";
 import ApiError from "../../errors/ApiError";
@@ -319,8 +319,7 @@ const getHostById = async (id: string) => {
                     id: true,
                     email: true,
                     role: true,
-                    status: true,
-                    interests: true
+                    status: true
                 }
             },
             hostedEvents: {
@@ -364,11 +363,10 @@ const getHostById = async (id: string) => {
         }
     });
 
-    // Clean up response: merge interests and remove duplicate user data
+    // Clean up response: interests are now directly in Host model
     const { user, ...hostData } = host;
     return {
         ...hostData,
-        interests: user.interests || [],
         userId: user.id, // Keep user ID for reference
         userStatus: user.status // Keep user status
     };
@@ -385,9 +383,20 @@ const getMyHostStats = async (user: IJWTPayload) => {
                 where: { isDeleted: false },
                 select: {
                     id: true,
+                    name: true,
                     status: true,
                     date: true,
-                    currentParticipants: true
+                    location: true,
+                    image: true,
+                    currentParticipants: true,
+                    maxParticipants: true,
+                    joiningFee: true,
+                    _count: {
+                        select: {
+                            participants: true,
+                            payments: true
+                        }
+                    }
                 }
             },
             _count: {
@@ -412,14 +421,38 @@ const getMyHostStats = async (user: IJWTPayload) => {
         0
     );
 
+    // Get recent events (upcoming and past)
+    const recentUpcomingEvents = upcomingEvents
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 5);
+
+    const recentPastEvents = pastEvents
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+
+    // Calculate total revenue from paid payments
+    const totalPaidRevenue = await prisma.payment.aggregate({
+        where: {
+            eventId: { in: host.hostedEvents.map(e => e.id) },
+            status: PaymentStatus.PAID
+        },
+        _sum: {
+            amount: true
+        }
+    });
+
     return {
-        totalEvents: host._count.hostedEvents,
-        upcomingEvents: upcomingEvents.length,
-        pastEvents: pastEvents.length,
-        totalParticipants,
-        totalRevenue: host.totalRevenue,
-        averageRating: host.averageRating,
-        totalReviews: host._count.reviews
+        overview: {
+            totalEvents: host._count.hostedEvents,
+            upcomingEvents: upcomingEvents.length,
+            pastEvents: pastEvents.length,
+            totalParticipants,
+            totalRevenue: totalPaidRevenue._sum.amount || host.totalRevenue,
+            averageRating: host.averageRating,
+            totalReviews: host._count.reviews
+        },
+        recentUpcomingEvents,
+        recentPastEvents
     };
 };
 

@@ -23,10 +23,10 @@ const createEvent = async (user: IJWTPayload, req: Request): Promise<Event> => {
         req.body.image = uploadResult?.secure_url;
     }
 
-    // Validate date is in the future
-    if (req.body.date && new Date(req.body.date) <= new Date()) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Event date must be in the future.");
-    }
+    // Validate date is in the future (commented for testing - allow past dates)
+    // if (req.body.date && new Date(req.body.date) <= new Date()) {
+    //     throw new ApiError(httpStatus.BAD_REQUEST, "Event date must be in the future.");
+    // }
 
     // Validate minParticipants <= maxParticipants
     if (req.body.minParticipants && req.body.maxParticipants) {
@@ -393,6 +393,124 @@ const updateEventStatus = async (user: IJWTPayload, eventId: string, status: Eve
     return updatedEvent;
 };
 
+/**
+ * Get event participants (Host only - for their own events)
+ */
+const getEventParticipants = async (user: IJWTPayload, eventId: string, options: any) => {
+    // Verify user is a host
+    const host = await prisma.host.findUniqueOrThrow({
+        where: { email: user.email, isDeleted: false }
+    });
+
+    // Verify event exists and belongs to this host
+    const event = await prisma.event.findUniqueOrThrow({
+        where: { id: eventId, isDeleted: false }
+    });
+
+    if (event.hostId !== host.id) {
+        throw new ApiError(httpStatus.FORBIDDEN, "You can only view participants for your own events.");
+    }
+
+    const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+
+    const whereConditions: Prisma.EventParticipantWhereInput = {
+        eventId: eventId,
+        isDeleted: false
+    };
+
+    const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const result = await prisma.eventParticipant.findMany({
+        skip,
+        take: limit,
+        where: whereConditions,
+        orderBy: { joinedAt: validSortOrder },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    profilePhoto: true,
+                    bio: true,
+                    location: true
+                }
+            }
+        }
+    });
+
+    const total = await prisma.eventParticipant.count({ where: whereConditions });
+
+    // Transform to include user data at root level
+    const transformedData = result.map(participant => {
+        const { id: participantId, joinedAt, user } = participant;
+        return {
+            participantId,
+            joinedAt,
+            ...user
+        };
+    });
+
+    return {
+        meta: { page, limit, total },
+        data: transformedData,
+        event: {
+            id: event.id,
+            name: event.name,
+            date: event.date,
+            currentParticipants: event.currentParticipants,
+            maxParticipants: event.maxParticipants
+        }
+    };
+};
+
+/**
+ * Remove participant from event (Host only - for their own events)
+ */
+const removeEventParticipant = async (user: IJWTPayload, eventId: string, participantId: string) => {
+    // Verify user is a host
+    const host = await prisma.host.findUniqueOrThrow({
+        where: { email: user.email, isDeleted: false }
+    });
+
+    // Verify event exists and belongs to this host
+    const event = await prisma.event.findUniqueOrThrow({
+        where: { id: eventId, isDeleted: false }
+    });
+
+    if (event.hostId !== host.id) {
+        throw new ApiError(httpStatus.FORBIDDEN, "You can only manage participants for your own events.");
+    }
+
+    // Verify participant exists and belongs to this event
+    const participant = await prisma.eventParticipant.findUniqueOrThrow({
+        where: { id: participantId, eventId: eventId }
+    });
+
+    // Soft delete participant
+    await prisma.$transaction(async (tnx) => {
+        await tnx.eventParticipant.update({
+            where: { id: participantId },
+            data: { isDeleted: true }
+        });
+
+        // Update event participant count
+        await tnx.event.update({
+            where: { id: eventId },
+            data: {
+                currentParticipants: {
+                    decrement: 1
+                },
+                status: event.currentParticipants - 1 < event.maxParticipants
+                    ? EventStatus.OPEN
+                    : event.status
+            }
+        });
+    });
+
+    return { message: "Participant removed successfully" };
+};
+
 export const EventService = {
     createEvent,
     getAllEvents,
@@ -400,6 +518,8 @@ export const EventService = {
     updateEvent,
     deleteEvent,
     getMyEvents,
-    updateEventStatus
+    updateEventStatus,
+    getEventParticipants,
+    removeEventParticipant
 };
 

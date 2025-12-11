@@ -86,6 +86,40 @@ router.get(
     UserController.getMyProfile
 );
 
+// Get public user profile by ID (Public)
+router.get(
+    '/:id/profile',
+    UserController.getUserProfileById
+);
+
+// Get my joined events (User only - all events I've joined)
+router.get(
+    '/my/events',
+    auth(UserRole.USER),
+    UserController.getMyJoinedEvents
+);
+
+// Get my upcoming events (User only - future events I've joined)
+router.get(
+    '/my/events/upcoming',
+    auth(UserRole.USER),
+    UserController.getMyUpcomingEvents
+);
+
+// Get my past events (User only - past/completed events I've joined)
+router.get(
+    '/my/events/past',
+    auth(UserRole.USER),
+    UserController.getMyPastEvents
+);
+
+// Get my dashboard statistics (User only)
+router.get(
+    '/my/dashboard',
+    auth(UserRole.USER),
+    UserController.getMyDashboardStats
+);
+
 // Update my profile
 router.patch(
     "/update-my-profile",
