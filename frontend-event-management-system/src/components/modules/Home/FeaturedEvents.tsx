@@ -1,7 +1,6 @@
 import { Star, MapPin, Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 const featuredEvents = [
   {
@@ -69,7 +68,7 @@ const EventCard = ({ event }: { event: typeof featuredEvents[0] }) => {
           </span>
         </div>
         <h3 className="text-xl font-bold text-foreground mb-3">{event.title}</h3>
-        
+
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="size-4" />
@@ -144,4 +143,5 @@ const FeaturedEvents = () => {
 };
 
 export default FeaturedEvents;
+
 

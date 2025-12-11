@@ -168,17 +168,26 @@ const getMe = async (session: any) => {
         where: {
             email: decodedData.email,
             status: UserStatus.ACTIVE
+        },
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            needPasswordChange: true,
+            status: true,
+            profilePhoto: true
         }
     });
 
-    const { id, email, role, needPasswordChange, status } = userData;
-
     return {
-        id,
-        email,
-        role,
-        needPasswordChange,
-        status
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        needPasswordChange: userData.needPasswordChange,
+        status: userData.status,
+        profilePhoto: userData.profilePhoto
     };
 };
 

@@ -12,6 +12,6 @@ export default function Home() {
       <HowItWorks />
       <FeaturedEvents />
       <Testimonials />
-    </main>
+      </main>
   );
 }
