@@ -51,6 +51,15 @@ export async function proxy(request: NextRequest) {
 
     const accessToken = getCookie(request, "accessToken") || null;
 
+    // Debug logging for cookie issues
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname.startsWith('/host')) {
+        console.log("🔍 Middleware check:", {
+            pathname,
+            hasAccessToken: !!accessToken,
+            allCookies: request.cookies.getAll().map(c => c.name),
+        });
+    }
+
     let userRole: UserRole | null = null;
     if (accessToken) {
         // Decode JWT to get role (without verification - verification happens in API routes)
@@ -59,6 +68,7 @@ export async function proxy(request: NextRequest) {
             userRole = decoded.role as UserRole;
         } else {
             // Invalid token format, clear cookies and redirect to login
+            console.log("❌ Invalid token format, redirecting to login");
             return createResponseWithDeletedCookies(new URL('/login', request.url));
         }
     }

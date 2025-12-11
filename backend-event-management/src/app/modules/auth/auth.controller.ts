@@ -9,17 +9,20 @@ const login = catchAsync(async (req: Request, res: Response) => {
 
     const { accessToken, refreshToken, needPasswordChange } = result;
 
-    res.cookie("accessToken", accessToken, {
-        secure: true,
+    // Set cookie options based on environment
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const cookieOptions = {
         httpOnly: true,
-        sameSite: "none",
-        maxAge: 1000 * 60 * 60
-    });
+        secure: !isDevelopment, // Only secure in production (HTTPS)
+        sameSite: isDevelopment ? ('lax' as const) : ('none' as const), // Lax for localhost, None for cross-origin
+        maxAge: 1000 * 60 * 60,
+        path: "/"
+    };
+
+    res.cookie("accessToken", accessToken, cookieOptions);
 
     res.cookie("refreshToken", refreshToken, {
-        secure: true,
-        httpOnly: true,
-        sameSite: "none",
+        ...cookieOptions,
         maxAge: 1000 * 60 * 60 * 24 * 90
     });
 

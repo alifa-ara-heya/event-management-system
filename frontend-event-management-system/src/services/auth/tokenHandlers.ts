@@ -5,7 +5,13 @@ import { cookies } from "next/headers";
 
 export const setCookie = async (key: string, value: string, options: Partial<ResponseCookie>) => {
     const cookieStore = await cookies();
-    cookieStore.set(key, value, options);
+    // Ensure all required options are set for persistence
+    const cookieOptions: Partial<ResponseCookie> = {
+        path: "/",
+        ...options,
+    };
+    cookieStore.set(key, value, cookieOptions);
+    console.log(`🍪 Cookie ${key} set with options:`, cookieOptions);
 }
 
 export const getCookie = async (key: string) => {

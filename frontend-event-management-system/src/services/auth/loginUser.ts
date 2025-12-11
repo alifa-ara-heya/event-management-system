@@ -111,23 +111,39 @@ export const loginUser = async (_currentState: any, formData: FormData): Promise
 
         if (accessTokenObject && accessTokenObject.accessToken) {
             console.log("✅ Access token found, setting cookie...");
+            const isProduction = process.env.NODE_ENV === 'production';
             await setCookie("accessToken", accessTokenObject.accessToken, {
-                secure: process.env.NODE_ENV === 'production',
+                secure: isProduction,
                 httpOnly: true,
                 maxAge: parseInt(accessTokenObject['Max-Age']) || 1000 * 60 * 60,
-                path: accessTokenObject.Path || "/",
-                sameSite: (accessTokenObject['SameSite']?.toLowerCase() || "lax") as "lax" | "strict" | "none",
+                path: "/", // Always use root path
+                sameSite: isProduction ? "lax" : "lax", // Always use "lax" for better compatibility
+            });
+            console.log("🍪 Cookie set with options:", {
+                secure: isProduction,
+                httpOnly: true,
+                maxAge: parseInt(accessTokenObject['Max-Age']) || 1000 * 60 * 60,
+                path: "/",
+                sameSite: "lax"
             });
         }
 
         if (refreshTokenObject && refreshTokenObject.refreshToken) {
             console.log("✅ Refresh token found, setting cookie...");
+            const isProduction = process.env.NODE_ENV === 'production';
             await setCookie("refreshToken", refreshTokenObject.refreshToken, {
-                secure: process.env.NODE_ENV === 'production',
+                secure: isProduction,
                 httpOnly: true,
                 maxAge: parseInt(refreshTokenObject['Max-Age']) || 1000 * 60 * 60 * 24 * 90,
-                path: refreshTokenObject.Path || "/",
-                sameSite: (refreshTokenObject['SameSite']?.toLowerCase() || "lax") as "lax" | "strict" | "none",
+                path: "/", // Always use root path
+                sameSite: isProduction ? "lax" : "lax", // Always use "lax" for better compatibility
+            });
+            console.log("🍪 Refresh cookie set with options:", {
+                secure: isProduction,
+                httpOnly: true,
+                maxAge: parseInt(refreshTokenObject['Max-Age']) || 1000 * 60 * 60 * 24 * 90,
+                path: "/",
+                sameSite: "lax"
             });
         }
 

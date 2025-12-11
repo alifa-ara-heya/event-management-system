@@ -2,6 +2,7 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 export interface UserInfo {
@@ -15,10 +16,18 @@ export interface UserInfo {
 export const getUserInfo = async (): Promise<UserInfo> => {
     const cookieStore = await cookies();
     const accessToken = cookieStore.get("accessToken")?.value;
+    const allCookies = cookieStore.getAll();
 
-    // If no access token, throw error immediately
+    // Debug logging
+    console.log("🔍 getUserInfo check:", {
+        hasAccessToken: !!accessToken,
+        allCookieNames: allCookies.map(c => c.name),
+    });
+
+    // If no access token, redirect to login
     if (!accessToken) {
-        throw new Error("No access token found");
+        console.log("❌ No access token in getUserInfo, redirecting to login");
+        redirect("/login");
     }
 
     try {

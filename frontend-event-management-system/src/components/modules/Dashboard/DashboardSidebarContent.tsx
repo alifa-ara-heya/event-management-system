@@ -90,6 +90,7 @@ const DashboardSidebarContent = ({
                                 src={userInfo.profilePhoto}
                                 alt={userInfo.name || "User"}
                                 fill
+                                sizes="32px"
                                 className="object-cover"
                             />
                         </div>

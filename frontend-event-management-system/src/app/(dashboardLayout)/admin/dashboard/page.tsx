@@ -106,6 +106,7 @@ async function AdminDashboardContent() {
                                                 src={event.image}
                                                 alt={event.name}
                                                 fill
+                                                sizes="64px"
                                                 className="object-cover"
                                             />
                                         </div>

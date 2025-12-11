@@ -218,6 +218,7 @@ const RegisterForm = () => {
                                         src={photoPreview}
                                         alt="Profile preview"
                                         fill
+                                        sizes="128px"
                                         className="object-cover"
                                     />
                                 </div>

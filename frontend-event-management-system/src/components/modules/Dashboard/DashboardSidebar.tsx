@@ -5,6 +5,7 @@ import { NavSection } from "@/lib/navItems.config";
 import DashboardSidebarContent from "./DashboardSidebarContent";
 
 const DashboardSidebar = async () => {
+    // getUserInfo will redirect to login if no token, so we don't need try-catch
     const userInfo = await getUserInfo();
 
     const navItems: NavSection[] = getNavItemsByRole(userInfo.role);

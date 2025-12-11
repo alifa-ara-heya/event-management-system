@@ -76,6 +76,7 @@ async function UserDashboardContent() {
                                                 src={event.image}
                                                 alt={event.name}
                                                 fill
+                                                sizes="64px"
                                                 className="object-cover"
                                             />
                                         </div>
@@ -117,6 +118,7 @@ async function UserDashboardContent() {
                                                 src={event.image}
                                                 alt={event.name}
                                                 fill
+                                                sizes="64px"
                                                 className="object-cover"
                                             />
                                         </div>
