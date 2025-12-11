@@ -93,7 +93,7 @@ async function HostDashboardContent() {
                             {stats.recentUpcomingEvents.map((event) => (
                                 <Link
                                     key={event.id}
-                                    href={`/host/events/${event.id}`}
+                                    href={`/events/${event.id}`}
                                     className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors"
                                 >
                                     {event.image && (
@@ -136,7 +136,7 @@ async function HostDashboardContent() {
                             {stats.recentPastEvents.map((event) => (
                                 <Link
                                     key={event.id}
-                                    href={`/host/events/${event.id}`}
+                                    href={`/events/${event.id}`}
                                     className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors"
                                 >
                                     {event.image && (

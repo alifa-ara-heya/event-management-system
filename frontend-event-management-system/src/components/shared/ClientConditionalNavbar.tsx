@@ -18,17 +18,8 @@ export function ClientConditionalNavbar() {
         pathname.startsWith("/my-profile");
 
     const checkAuth = useCallback(async () => {
-        // First check if cookies exist client-side before making API call
-        const cookies = document.cookie.split(';');
-        const hasAccessToken = cookies.some(c => c.trim().startsWith('accessToken='));
-
-        if (!hasAccessToken) {
-            setUserInfo(null);
-            setIsLoading(false);
-            return;
-        }
-
         try {
+            console.log("🔍 Checking authentication status...");
             const response = await fetch("/api/auth/me", {
                 credentials: "include",
                 cache: "no-store",
@@ -37,8 +28,11 @@ export function ClientConditionalNavbar() {
                 },
             });
 
+            console.log("📡 Auth check response status:", response.status);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log("✅ Auth check successful, user data:", data.data);
                 if (data.success && data.data && data.data.email) {
                     setUserInfo({
                         id: data.data.id,
@@ -48,13 +42,17 @@ export function ClientConditionalNavbar() {
                         profilePhoto: data.data.profilePhoto,
                     });
                 } else {
+                    console.log("❌ Auth check failed: invalid data structure");
                     setUserInfo(null);
                 }
             } else {
+                // 401 or other error - user is not logged in
+                console.log("❌ Auth check failed: status", response.status);
                 setUserInfo(null);
             }
         } catch (error) {
-            // User is not logged in
+            // Network error or other issue - assume not logged in
+            console.error("❌ Error checking auth:", error);
             setUserInfo(null);
         } finally {
             setIsLoading(false);
@@ -68,7 +66,8 @@ export function ClientConditionalNavbar() {
             return;
         }
 
-        // Always re-check auth when pathname changes (especially after logout redirect)
+        // Always re-check auth when pathname changes (especially when navigating from dashboard to home)
+        console.log("🔄 Checking auth for pathname:", pathname);
         setIsLoading(true);
         checkAuth();
     }, [isDashboardRoute, pathname, checkAuth, authKey]);

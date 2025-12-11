@@ -180,14 +180,48 @@ const getMe = async (session: any) => {
         }
     });
 
+    // For HOST and ADMIN users, fetch name and profilePhoto from their respective tables
+    let name = userData.name;
+    let profilePhoto = userData.profilePhoto;
+
+    if (userData.role === "HOST") {
+        const hostData = await prisma.host.findUnique({
+            where: {
+                email: userData.email
+            },
+            select: {
+                name: true,
+                profilePhoto: true
+            }
+        });
+        if (hostData) {
+            name = hostData.name;
+            profilePhoto = hostData.profilePhoto;
+        }
+    } else if (userData.role === "ADMIN") {
+        const adminData = await prisma.admin.findUnique({
+            where: {
+                email: userData.email
+            },
+            select: {
+                name: true,
+                profilePhoto: true
+            }
+        });
+        if (adminData) {
+            name = adminData.name;
+            profilePhoto = adminData.profilePhoto;
+        }
+    }
+
     return {
         id: userData.id,
         email: userData.email,
-        name: userData.name,
+        name: name,
         role: userData.role,
         needPasswordChange: userData.needPasswordChange,
         status: userData.status,
-        profilePhoto: userData.profilePhoto
+        profilePhoto: profilePhoto
     };
 };
 

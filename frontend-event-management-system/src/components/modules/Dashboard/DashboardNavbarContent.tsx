@@ -21,8 +21,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { LogoutButton } from "@/components/shared/LogoutButton";
 import { ModeToggle } from "@/components/shared/modeToggle";
-import { Moon, Sun, Monitor } from "lucide-react";
-import { useTheme } from "next-themes";
 
 interface DashboardNavbarContentProps {
     userInfo: UserInfo;
@@ -31,7 +29,6 @@ interface DashboardNavbarContentProps {
 const DashboardNavbarContent = ({ userInfo }: DashboardNavbarContentProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const { theme, setTheme } = useTheme();
 
     useEffect(() => {
         const checkSmallerScreen = () => {
@@ -104,19 +101,6 @@ const DashboardNavbarContent = ({ userInfo }: DashboardNavbarContentProps) => {
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <Link href={dashboardHome}>Dashboard</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer">
-                                <Sun className="mr-2 h-4 w-4" />
-                                <span>Light</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer">
-                                <Moon className="mr-2 h-4 w-4" />
-                                <span>Dark</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer">
-                                <Monitor className="mr-2 h-4 w-4" />
-                                <span>System</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <LogoutButton />
