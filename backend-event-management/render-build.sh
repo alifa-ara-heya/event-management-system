@@ -9,7 +9,7 @@ npm install
 npm run build
 
 # Generate Prisma client
-npx prisma generate
+npx prisma generate --schema=./prisma/schema
 
 # Deploy Prisma migrations
-npx prisma migrate deploy
+npx prisma migrate deploy --schema=./prisma/schema
