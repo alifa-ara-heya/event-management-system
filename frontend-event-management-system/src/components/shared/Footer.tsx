@@ -8,11 +8,11 @@ import { ModeToggle } from "@/components/shared/modeToggle";
 
 export function Footer() {
     const pathname = usePathname();
-    
+
     // Don't show footer on dashboard routes
-    const isDashboardRoute = pathname.startsWith("/dashboard") || 
-                            pathname.startsWith("/admin") || 
-                            pathname.startsWith("/host");
+    const isDashboardRoute = pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/host");
 
     if (isDashboardRoute) {
         return null;
@@ -79,26 +79,34 @@ export function Footer() {
                             </li>
                             <li>
                                 <Link
+                                    href="/about"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    About Us
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/contact"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    Contact Us
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/faq"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    FAQ
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
                                     href="/become-a-host"
                                     className="text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     Become a Host
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/login"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    Login
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/register"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    Register
                                 </Link>
                             </li>
                         </ul>
@@ -110,15 +118,15 @@ export function Footer() {
                         <ul className="space-y-2 text-sm">
                             <li>
                                 <Link
-                                    href="#"
+                                    href="/faq"
                                     className="text-muted-foreground hover:text-foreground transition-colors"
                                 >
-                                    Help Center
+                                    FAQ
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    href="#"
+                                    href="/contact"
                                     className="text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     Contact Us

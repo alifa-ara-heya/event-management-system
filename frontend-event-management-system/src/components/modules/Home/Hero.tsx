@@ -1,9 +1,86 @@
+"use client";
+
 import { Search, Calendar, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, useEffect } from "react";
+import Link from "next/link";
+import { UserInfo } from "@/services/auth/getUserInfo";
 
 export function Hero() {
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+    const [eventSearch, setEventSearch] = useState("");
+    const [location, setLocation] = useState("");
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+    // Check authentication status
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const response = await fetch("/api/auth/me", {
+                    credentials: "include",
+                    cache: "no-store",
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data && data.data.email) {
+                        setUserInfo({
+                            id: data.data.id,
+                            name: data.data.name,
+                            email: data.data.email,
+                            role: data.data.role,
+                            profilePhoto: data.data.profilePhoto,
+                        });
+                    }
+                }
+            } catch {
+                // User is not logged in
+                setUserInfo(null);
+            } finally {
+                setIsLoadingAuth(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
+    // Determine the "Create Event" button destination
+    const getCreateEventLink = () => {
+        if (isLoadingAuth) return "#";
+        if (!userInfo) return "/register";
+        if (userInfo.role === "HOST") return "/host/create-event";
+        return "/become-a-host";
+    };
+
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        startTransition(() => {
+            const params = new URLSearchParams();
+
+            // Combine event search and location into searchTerm
+            // The backend searches in name, description, and location fields
+            const searchTerms: string[] = [];
+            if (eventSearch.trim()) {
+                searchTerms.push(eventSearch.trim());
+            }
+            if (location.trim()) {
+                searchTerms.push(location.trim());
+            }
+
+            if (searchTerms.length > 0) {
+                params.set("searchTerm", searchTerms.join(" "));
+            }
+
+            // Navigate to events page with search params
+            router.push(`/events?${params.toString()}`);
+        });
+    };
     return (
         <div className="w-full relative overflow-hidden">
             {/* Gradient Background */}
@@ -51,17 +128,24 @@ export function Hero() {
                                 <Button
                                     size="lg"
                                     className="h-14 gap-3 rounded-xl px-8 text-base"
+                                    asChild
                                 >
-                                    <Search className="size-5" />
-                                    Find Events
+                                    <Link href="/events">
+                                        <Search className="size-5" />
+                                        Find Events
+                                    </Link>
                                 </Button>
                                 <Button
                                     variant="outline"
                                     size="lg"
                                     className="h-14 gap-3 rounded-xl px-8 text-base border-primary text-primary hover:bg-primary/10"
+                                    asChild
+                                    disabled={isLoadingAuth}
                                 >
-                                    <Calendar className="size-5" />
-                                    Create Event
+                                    <Link href={getCreateEventLink()}>
+                                        <Calendar className="size-5" />
+                                        Create Event
+                                    </Link>
                                 </Button>
                             </div>
 
@@ -105,7 +189,7 @@ export function Hero() {
                                 </div>
 
                                 {/* Form */}
-                                <form className="space-y-6">
+                                <form onSubmit={handleSearch} className="space-y-6">
                                     {/* Event Search Input */}
                                     <div className="space-y-2">
                                         <Label htmlFor="event-search" className="text-sm text-muted-foreground">
@@ -116,6 +200,9 @@ export function Hero() {
                                             name="event-search"
                                             placeholder="e.g., concert, hiking, board games"
                                             className="h-12 rounded-xl"
+                                            value={eventSearch}
+                                            onChange={(e) => setEventSearch(e.target.value)}
+                                            disabled={isPending}
                                         />
                                     </div>
 
@@ -129,6 +216,9 @@ export function Hero() {
                                             name="location"
                                             placeholder="City or area"
                                             className="h-12 rounded-xl"
+                                            value={location}
+                                            onChange={(e) => setLocation(e.target.value)}
+                                            disabled={isPending}
                                         />
                                     </div>
 
@@ -136,9 +226,10 @@ export function Hero() {
                                     <Button
                                         type="submit"
                                         className="h-12 w-full rounded-xl text-base"
+                                        disabled={isPending}
                                     >
                                         <Search className="size-5" />
-                                        Search Events
+                                        {isPending ? "Searching..." : "Search Events"}
                                     </Button>
                                 </form>
 

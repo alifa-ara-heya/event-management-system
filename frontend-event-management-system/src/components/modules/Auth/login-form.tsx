@@ -79,14 +79,6 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
                                 Sign up
                             </Link>
                         </FieldDescription>
-                        <FieldDescription className="px-6 text-center">
-                            <Link
-                                href="/forgot-password"
-                                className="text-primary hover:underline font-medium"
-                            >
-                                Forgot password?
-                            </Link>
-                        </FieldDescription>
                     </Field>
                 </FieldGroup>
             </FieldGroup>

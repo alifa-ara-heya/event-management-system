@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
+import Image from "next/image"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,6 +33,9 @@ export function Navbar({ userInfo }: NavbarProps) {
     // Show it for regular users and non-logged-in users
     const navLinks = [
         { href: "/events", label: "Explore Events" },
+        { href: "/about", label: "About" },
+        { href: "/contact", label: "Contact" },
+        { href: "/faq", label: "FAQ" },
         ...(userInfo?.role !== "HOST" && userInfo?.role !== "ADMIN"
             ? [{ href: "/become-a-host", label: "Become a Host" }]
             : []),
@@ -42,9 +46,16 @@ export function Navbar({ userInfo }: NavbarProps) {
             <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-2">
                     <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            EM
-                        </span>
+                        <div className="relative h-9 w-9 flex items-center justify-center">
+                            <Image
+                                src="/assets/icons/event-icon.png"
+                                alt="EventMate Logo"
+                                width={36}
+                                height={36}
+                                className="object-contain"
+                                priority
+                            />
+                        </div>
                         <span className="text-base">EventMate</span>
                     </Link>
                 </div>
@@ -194,4 +205,3 @@ export function Navbar({ userInfo }: NavbarProps) {
         </header>
     )
 }
-
