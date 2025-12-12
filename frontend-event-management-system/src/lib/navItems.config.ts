@@ -78,6 +78,17 @@ export const getUserNavItems = (): NavSection[] => {
                 },
             ],
         },
+        {
+            title: "Host",
+            items: [
+                {
+                    title: "Become a Host",
+                    href: "/dashboard/become-host",
+                    icon: "UserPlus",
+                    roles: ["USER"],
+                },
+            ],
+        },
     ];
 };
 

@@ -19,17 +19,21 @@ export function LogoutButton() {
         window.dispatchEvent(new CustomEvent("user-logged-out"));
 
         startTransition(async () => {
-            // Call server action to clear cookies server-side
-            await logoutUser();
+            try {
+                // Call server action to clear cookies server-side
+                await logoutUser();
 
-            // Show toast
-            toast.success("You have been logged out successfully");
+                // Show toast
+                toast.success("You have been logged out successfully");
 
-            // Small delay to ensure state updates, then redirect
-            setTimeout(() => {
-                router.push("/");
-                router.refresh();
-            }, 50);
+                // Use window.location for a hard redirect to ensure middleware sees cleared cookies
+                // This forces a full page reload and ensures cookies are cleared
+                window.location.href = "/";
+            } catch (error) {
+                console.error("Error during logout:", error);
+                // Even if there's an error, try to redirect
+                window.location.href = "/";
+            }
         });
     };
 

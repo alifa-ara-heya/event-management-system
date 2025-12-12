@@ -394,7 +394,8 @@ const getMyPayments = async (user: IJWTPayload, params: any, options: any) => {
                     name: true,
                     date: true,
                     location: true,
-                    image: true
+                    image: true,
+                    type: true
                 }
             }
         }

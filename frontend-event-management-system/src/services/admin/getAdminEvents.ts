@@ -2,7 +2,7 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 
-export interface PublicEvent {
+export interface AdminEvent {
     id: string;
     name: string;
     description: string | null;
@@ -12,31 +12,31 @@ export interface PublicEvent {
     status: string;
     type: string;
     joiningFee: number;
-    minParticipants: number;
     maxParticipants: number;
-    currentParticipants: number;
     host: {
         id: string;
         name: string;
         email: string;
         profilePhoto: string | null;
-        averageRating: number | null;
     };
     _count: {
         participants: number;
+        payments: number;
     };
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface AllEventsResponse {
+export interface AdminEventsResponse {
     meta: {
         page: number;
         limit: number;
         total: number;
     };
-    data: PublicEvent[];
+    data: AdminEvent[];
 }
 
-export interface GetAllEventsParams {
+export interface GetAdminEventsParams {
     page?: number;
     limit?: number;
     sortBy?: string;
@@ -44,10 +44,9 @@ export interface GetAllEventsParams {
     status?: string;
     type?: string;
     searchTerm?: string;
-    includePast?: boolean;
 }
 
-export const getAllEvents = async (params?: GetAllEventsParams): Promise<AllEventsResponse> => {
+export const getAdminEvents = async (params?: GetAdminEventsParams): Promise<AdminEventsResponse> => {
     const searchParams = new URLSearchParams();
 
     if (params?.page) searchParams.set("page", params.page.toString());
@@ -57,16 +56,12 @@ export const getAllEvents = async (params?: GetAllEventsParams): Promise<AllEven
     if (params?.status && params.status !== "all") searchParams.set("status", params.status);
     if (params?.type && params.type !== "all") searchParams.set("type", params.type);
     if (params?.searchTerm) searchParams.set("searchTerm", params.searchTerm);
-    // Only set includePast if it's explicitly true, otherwise backend will filter out past events
-    if (params?.includePast === true) {
-        searchParams.set("includePast", "true");
-    }
 
     const queryString = searchParams.toString();
-    const endpoint = `/event${queryString ? `?${queryString}` : ""}`;
+    const endpoint = `/admin/events${queryString ? `?${queryString}` : ""}`;
 
     const response = await serverFetch.get(endpoint, {
-        next: { revalidate: 0, tags: ["events"] },
+        next: { revalidate: 60 },
     });
 
     const result = await response.json();

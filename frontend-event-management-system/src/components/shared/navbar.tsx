@@ -20,11 +20,6 @@ import { getDefaultDashboardRoute } from "@/lib/auth-utils"
 import { UserInfo } from "@/services/auth/getUserInfo"
 import { LogoutButton } from "./LogoutButton"
 
-const navLinks = [
-    { href: "/events", label: "Explore Events" },
-    { href: "/become-a-host", label: "Become a Host" },
-]
-
 interface NavbarProps {
     userInfo?: UserInfo | null;
 }
@@ -32,6 +27,15 @@ interface NavbarProps {
 export function Navbar({ userInfo }: NavbarProps) {
     const pathname = usePathname()
     const dashboardRoute = userInfo?.role ? getDefaultDashboardRoute(userInfo.role) : "/dashboard"
+
+    // Only show "Become a Host" if user is not already a host or admin
+    // Show it for regular users and non-logged-in users
+    const navLinks = [
+        { href: "/events", label: "Explore Events" },
+        ...(userInfo?.role !== "HOST" && userInfo?.role !== "ADMIN"
+            ? [{ href: "/become-a-host", label: "Become a Host" }]
+            : []),
+    ]
 
     return (
         <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
+import { AdminDashboardCharts } from "@/components/modules/Dashboard/AdminDashboardCharts";
 
 async function AdminDashboardContent() {
     const stats = await getAdminDashboardStats();
@@ -85,6 +86,9 @@ async function AdminDashboardContent() {
                 </Card>
             </div>
 
+            {/* Charts Section */}
+            <AdminDashboardCharts stats={stats} />
+
             {/* Recent Events */}
             {stats.recentEvents.length > 0 && (
                 <Card>
@@ -101,7 +105,7 @@ async function AdminDashboardContent() {
                                     className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors"
                                 >
                                     {event.image && (
-                                        <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                                        <div className="relative h-16 w-16 rounded-lg overflow-hidden shrink-0">
                                             <Image
                                                 src={event.image}
                                                 alt={event.name}
@@ -175,6 +179,26 @@ function DashboardSkeleton() {
                         </CardContent>
                     </Card>
                 ))}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-64 w-full" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-64 w-full" />
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

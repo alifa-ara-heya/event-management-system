@@ -1,13 +1,20 @@
 import { getUserDashboardStats } from "@/services/dashboard/getUserDashboardStats";
+import { getPaymentStats } from "@/services/dashboard/getPaymentStats";
+import { getEventActivityData } from "@/services/dashboard/getEventActivityData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, History, Star, CalendarDays } from "lucide-react";
+import { Calendar, Clock, History, Star, DollarSign, TrendingUp } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
+import { DashboardCharts } from "@/components/modules/Dashboard/DashboardCharts";
 
 async function UserDashboardContent() {
-    const stats = await getUserDashboardStats();
+    const [stats, paymentStats, eventActivity] = await Promise.all([
+        getUserDashboardStats(),
+        getPaymentStats(),
+        getEventActivityData(),
+    ]);
 
     return (
         <div className="space-y-6">
@@ -45,15 +52,34 @@ async function UserDashboardContent() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Reviews</CardTitle>
-                        <Star className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">
+                            {paymentStats.totalSpent > 0 ? "Total Spent" : "Reviews"}
+                        </CardTitle>
+                        {paymentStats.totalSpent > 0 ? (
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                            <Star className="h-4 w-4 text-muted-foreground" />
+                        )}
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.overview.totalReviews}</div>
-                        <p className="text-xs text-muted-foreground">Total reviews written</p>
+                        <div className="text-2xl font-bold">
+                            {paymentStats.totalSpent > 0
+                                ? `$${paymentStats.totalSpent.toFixed(2)}`
+                                : stats.overview.totalReviews
+                            }
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {paymentStats.totalSpent > 0
+                                ? "Total spending"
+                                : "Total reviews written"
+                            }
+                        </p>
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Charts Section */}
+            <DashboardCharts stats={stats} paymentStats={paymentStats} eventActivity={eventActivity} />
 
             {/* Upcoming Events */}
             {stats.upcomingEvents.length > 0 && (
@@ -71,7 +97,7 @@ async function UserDashboardContent() {
                                     className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors"
                                 >
                                     {event.image && (
-                                        <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                                        <div className="relative h-16 w-16 rounded-lg overflow-hidden shrink-0">
                                             <Image
                                                 src={event.image}
                                                 alt={event.name}
@@ -113,7 +139,7 @@ async function UserDashboardContent() {
                                     className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors"
                                 >
                                     {event.image && (
-                                        <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                                        <div className="relative h-16 w-16 rounded-lg overflow-hidden shrink-0">
                                             <Image
                                                 src={event.image}
                                                 alt={event.name}
@@ -157,6 +183,26 @@ function DashboardSkeleton() {
                         </CardContent>
                     </Card>
                 ))}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-64 w-full" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-64 w-full" />
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

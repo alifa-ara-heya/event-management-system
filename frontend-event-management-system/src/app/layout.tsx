@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClientConditionalNavbar } from "@/components/shared/ClientConditionalNavbar";
+import { Footer } from "@/components/shared/Footer";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -36,9 +37,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-screen bg-background text-foreground">
+          <div className="min-h-screen bg-background text-foreground flex flex-col">
             <ClientConditionalNavbar />
-            {children}
+            <div className="flex-1">
+              {children}
+            </div>
+            <Footer />
           </div>
           <Toaster position="bottom-right" richColors />
         </ThemeProvider>
