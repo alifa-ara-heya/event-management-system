@@ -2,3 +2,9 @@ node_modules
 dist/
 .env
 prisma/generated/prisma
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+*.log
