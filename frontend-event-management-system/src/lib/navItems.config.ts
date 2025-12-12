@@ -67,6 +67,17 @@ export const getUserNavItems = (): NavSection[] => {
                 },
             ],
         },
+        {
+            title: "Payments",
+            items: [
+                {
+                    title: "My Payments",
+                    href: "/dashboard/my-payments",
+                    icon: "Wallet",
+                    roles: ["USER"],
+                },
+            ],
+        },
     ];
 };
 

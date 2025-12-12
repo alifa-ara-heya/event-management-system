@@ -39,5 +39,12 @@ router.get(
     PaymentController.getMyPayments
 );
 
+// Cancel unpaid payment (User only - own payments)
+router.delete(
+    "/:id",
+    auth(UserRole.USER),
+    PaymentController.cancelPayment
+);
+
 export const paymentRoutes = router;
 

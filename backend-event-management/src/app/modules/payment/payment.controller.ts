@@ -88,10 +88,24 @@ const getMyPayments = catchAsync(async (req: Request & { user?: any }, res: Resp
     });
 });
 
+const cancelPayment = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { id } = req.params;
+    const result = await PaymentService.cancelPayment(user, id);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: result.message,
+        data: result
+    });
+});
+
 export const PaymentController = {
     createPaymentIntent,
     handleStripeWebhookEvent,
     getPaymentById,
-    getMyPayments
+    getMyPayments,
+    cancelPayment
 };
 

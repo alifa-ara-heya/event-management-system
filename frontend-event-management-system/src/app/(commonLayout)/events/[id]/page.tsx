@@ -6,8 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { JoinEventButton } from "@/components/modules/Events/JoinEventButton";
 import { notFound } from "next/navigation";
 
 interface EventDetailPageProps {
@@ -65,7 +64,7 @@ async function EventDetailContent({ params }: EventDetailPageProps) {
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
                                 className="object-cover"
                                 priority
-                                quality={90}
+                                quality={75}
                             />
                         </div>
                     )}
@@ -255,24 +254,14 @@ async function EventDetailContent({ params }: EventDetailPageProps) {
                                 </CardContent>
                             </Card>
 
-                            {/* Join Event Button (for users) - can be added later */}
-                            {isUpcoming && !isFull && event.status === "OPEN" && (
-                                <Button className="w-full" size="lg" asChild>
-                                    <Link href={`/events/${event.id}/join`}>
-                                        Join Event
-                                    </Link>
-                                </Button>
-                            )}
-
-                            {isFull && (
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <p className="text-sm text-muted-foreground text-center">
-                                            This event is full
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                            )}
+                            {/* Join Event Button */}
+                            <JoinEventButton
+                                eventId={event.id}
+                                isUpcoming={isUpcoming}
+                                isFull={isFull}
+                                status={event.status}
+                                joiningFee={event.joiningFee}
+                            />
                         </div>
                     </div>
                 </div>

@@ -61,7 +61,7 @@ const createEvent = async (user: IJWTPayload, req: Request): Promise<Event> => {
  */
 const getAllEvents = async (params: any, options: any) => {
     const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
-    const { searchTerm, ...filterData } = params;
+    const { searchTerm, includePast, ...filterData } = params;
 
     const andConditions: Prisma.EventWhereInput[] = [];
 
@@ -77,7 +77,7 @@ const getAllEvents = async (params: any, options: any) => {
         });
     }
 
-    // Add filter conditions
+    // Add filter conditions (exclude includePast as it's not a database field)
     if (Object.keys(filterData).length > 0) {
         andConditions.push({
             AND: Object.keys(filterData).map(key => {
@@ -96,7 +96,8 @@ const getAllEvents = async (params: any, options: any) => {
     andConditions.push({ isDeleted: false });
 
     // Filter out past events by default (optional - can be overridden)
-    if (!filterData.includePast) {
+    // includePast can be "true" (string from query) or true (boolean)
+    if (!includePast || includePast === "false") {
         andConditions.push({
             date: { gte: new Date() }
         });

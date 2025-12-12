@@ -50,7 +50,81 @@ const createPaymentIntent = async (user: IJWTPayload, eventId: string) => {
     });
 
     if (existingPayment) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "You have an unpaid payment for this event. Please complete it first.");
+        // If there's an existing Stripe session, try to retrieve it
+        if (existingPayment.transactionId && existingPayment.transactionId.startsWith('cs_')) {
+            try {
+                const session = await stripe.checkout.sessions.retrieve(existingPayment.transactionId);
+                console.log("Retrieved existing session:", {
+                    id: session.id,
+                    status: session.status,
+                    url: session.url
+                });
+
+                // If session is still open and has a URL, return the checkout URL
+                if (session.status === 'open' && session.url) {
+                    return {
+                        success: true,
+                        message: "You have an existing payment session. Redirecting to checkout...",
+                        paymentId: existingPayment.id,
+                        checkoutUrl: session.url,
+                        sessionId: session.id
+                    };
+                }
+
+                // If session is expired or completed, create a new one
+                console.log("Session is not open, creating new session. Status:", session.status);
+            } catch (error: any) {
+                // Session might be invalid, we'll create a new one
+                console.log("Existing session invalid, creating new one. Error:", error.message);
+            }
+        }
+
+        // Create a new Stripe checkout session for the existing payment
+        console.log("Creating new Stripe session for existing payment:", existingPayment.id);
+        const newSession = await stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            line_items: [
+                {
+                    price_data: {
+                        currency: "usd",
+                        product_data: {
+                            name: event.name,
+                            description: event.description || `Join ${event.name} on ${new Date(event.date).toLocaleDateString()}`,
+                            images: event.image ? [event.image] : []
+                        },
+                        unit_amount: Math.round(event.joiningFee * 100)
+                    },
+                    quantity: 1
+                }
+            ],
+            mode: "payment",
+            success_url: `${process.env.CLIENT_URL || "http://localhost:3000"}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.CLIENT_URL || "http://localhost:3000"}/payment/cancel`,
+            metadata: {
+                eventId: eventId,
+                userId: user.email,
+                paymentId: existingPayment.id
+            }
+        });
+
+        // Update payment with new session ID
+        await prisma.payment.update({
+            where: { id: existingPayment.id },
+            data: {
+                transactionId: newSession.id,
+                paymentGatewayData: newSession as any
+            }
+        });
+
+        console.log("New session created:", { id: newSession.id, url: newSession.url });
+
+        return {
+            success: true,
+            message: "Payment session created successfully",
+            paymentId: existingPayment.id,
+            checkoutUrl: newSession.url,
+            sessionId: newSession.id
+        };
     }
 
     // If event is free, directly add participant
@@ -334,10 +408,41 @@ const getMyPayments = async (user: IJWTPayload, params: any, options: any) => {
     };
 };
 
+/**
+ * Cancel/Delete unpaid payment (User only - own payments)
+ */
+const cancelPayment = async (user: IJWTPayload, paymentId: string) => {
+    // Verify payment exists and belongs to user
+    const payment = await prisma.payment.findUniqueOrThrow({
+        where: { id: paymentId }
+    });
+
+    // Verify user owns this payment
+    if (payment.userId !== user.email) {
+        throw new ApiError(httpStatus.FORBIDDEN, "You can only cancel your own payments.");
+    }
+
+    // Only allow canceling unpaid payments
+    if (payment.status !== PaymentStatus.UNPAID) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only unpaid payments can be cancelled.");
+    }
+
+    // Delete the payment
+    await prisma.payment.delete({
+        where: { id: paymentId }
+    });
+
+    return {
+        success: true,
+        message: "Payment cancelled successfully"
+    };
+};
+
 export const PaymentService = {
     createPaymentIntent,
     handleStripeWebhookEvent,
     getPaymentById,
-    getMyPayments
+    getMyPayments,
+    cancelPayment
 };
 
