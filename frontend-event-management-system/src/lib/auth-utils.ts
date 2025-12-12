@@ -40,6 +40,13 @@ export const isRouteMatches = (pathname: string, routes: RouteConfig): boolean =
 }
 
 export const getRouteOwner = (pathname: string): "ADMIN" | "HOST" | "USER" | "COMMON" | null => {
+    // Public host profile route: /host/[id] where id is a UUID
+    // UUID pattern: 8-4-4-4-12 hex digits
+    const hostProfilePattern = /^\/host\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (hostProfilePattern.test(pathname)) {
+        return null; // Public route
+    }
+
     if (isRouteMatches(pathname, adminProtectedRoutes)) {
         return "ADMIN";
     }

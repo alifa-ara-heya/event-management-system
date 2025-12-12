@@ -5,12 +5,16 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
+import { HostDashboardCharts } from "@/components/modules/Dashboard/HostDashboardCharts";
 
 async function HostDashboardContent() {
     const stats = await getHostDashboardStats();
 
     return (
         <div className="space-y-6">
+            {/* Charts Section - Moved to top */}
+            <HostDashboardCharts stats={stats} />
+
             {/* Stats Cards Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>

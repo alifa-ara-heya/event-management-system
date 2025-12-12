@@ -10,9 +10,11 @@ export function Footer() {
     const pathname = usePathname();
 
     // Don't show footer on dashboard routes
+    // Exclude public host profile routes (UUID pattern)
+    const isPublicHostProfile = /^\/host\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pathname);
     const isDashboardRoute = pathname.startsWith("/dashboard") ||
         pathname.startsWith("/admin") ||
-        pathname.startsWith("/host");
+        (pathname.startsWith("/host") && !isPublicHostProfile);
 
     if (isDashboardRoute) {
         return null;
@@ -36,28 +38,28 @@ export function Footer() {
                         <div className="flex items-center gap-4">
                             <a
                                 href="#"
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Facebook"
                             >
                                 <Facebook className="h-5 w-5" />
                             </a>
                             <a
                                 href="#"
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Twitter"
                             >
                                 <Twitter className="h-5 w-5" />
                             </a>
                             <a
                                 href="#"
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Instagram"
                             >
                                 <Instagram className="h-5 w-5" />
                             </a>
                             <a
                                 href="#"
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="LinkedIn"
                             >
                                 <Linkedin className="h-5 w-5" />
@@ -72,7 +74,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/events"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     Explore Events
                                 </Link>
@@ -80,7 +82,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/about"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     About Us
                                 </Link>
@@ -88,7 +90,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/contact"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     Contact Us
                                 </Link>
@@ -96,7 +98,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/faq"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     FAQ
                                 </Link>
@@ -104,7 +106,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/become-a-host"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     Become a Host
                                 </Link>
@@ -119,7 +121,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/faq"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     FAQ
                                 </Link>
@@ -127,7 +129,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="/contact"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     Contact Us
                                 </Link>
@@ -135,7 +137,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="#"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     Privacy Policy
                                 </Link>
@@ -143,7 +145,7 @@ export function Footer() {
                             <li>
                                 <Link
                                     href="#"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     Terms of Service
                                 </Link>

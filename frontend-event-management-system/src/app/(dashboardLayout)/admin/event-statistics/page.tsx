@@ -17,6 +17,9 @@ async function EventStatisticsContent() {
                 </p>
             </div>
 
+            {/* Charts - Moved to top */}
+            <EventStatisticsCharts stats={stats} />
+
             {/* Overview Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -62,9 +65,6 @@ async function EventStatisticsContent() {
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Charts */}
-            <EventStatisticsCharts stats={stats} />
         </div>
     );
 }

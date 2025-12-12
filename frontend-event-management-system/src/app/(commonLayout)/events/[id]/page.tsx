@@ -7,7 +7,11 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { JoinEventButton } from "@/components/modules/Events/JoinEventButton";
+import { ReviewFormWrapper } from "@/components/modules/Events/ReviewFormWrapper";
+import { EventReviews } from "@/components/modules/Events/EventReviews";
 import { notFound } from "next/navigation";
+import { getUserInfo } from "@/services/auth/getUserInfo";
+import Link from "next/link";
 
 interface EventDetailPageProps {
     params: Promise<{
@@ -19,8 +23,17 @@ async function EventDetailContent({ params }: EventDetailPageProps) {
     const { id } = await params;
 
     let event;
+    let currentUser = null;
+    
     try {
         event = await getEventById(id);
+        // Try to get current user info (won't throw if not logged in)
+        try {
+            currentUser = await getUserInfo();
+        } catch (error) {
+            // User is not logged in, that's okay
+            currentUser = null;
+        }
     } catch (error: any) {
         console.error("Error fetching event:", error);
         notFound();
@@ -147,40 +160,44 @@ async function EventDetailContent({ params }: EventDetailPageProps) {
                                 <CardTitle>Host Information</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                                    <Avatar className="h-20 w-20 sm:h-24 sm:w-24 shrink-0">
-                                        <AvatarImage src={event.host.profilePhoto || ""} alt={event.host.name} sizes="96px" />
-                                        <AvatarFallback className="text-lg sm:text-xl">
-                                            {event.host.name.charAt(0).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0 space-y-2">
-                                        <h3 className="font-semibold text-lg sm:text-xl">{event.host.name}</h3>
-                                        {event.host.bio && (
-                                            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{event.host.bio}</p>
-                                        )}
-                                        {event.host.location && (
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                                <MapPin className="h-4 w-4 shrink-0" />
-                                                <span className="break-words">{event.host.location}</span>
-                                            </p>
-                                        )}
-                                        <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-sm">
-                                            {event.host.averageRating && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
-                                                    <span className="font-semibold">{event.host.averageRating.toFixed(1)}</span>
-                                                    <span className="text-muted-foreground">
-                                                        ({event.host._count.reviews} review{event.host._count.reviews !== 1 ? "s" : ""})
-                                                    </span>
-                                                </div>
+                                <Link href={`/host/${event.host.id}`} className="block">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 hover:opacity-80 transition-opacity">
+                                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 shrink-0">
+                                            <AvatarImage src={event.host.profilePhoto || ""} alt={event.host.name} sizes="96px" />
+                                            <AvatarFallback className="text-lg sm:text-xl">
+                                                {event.host.name.charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0 space-y-2">
+                                            <h3 className="font-semibold text-lg sm:text-xl hover:text-primary transition-colors">
+                                                {event.host.name}
+                                            </h3>
+                                            {event.host.bio && (
+                                                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{event.host.bio}</p>
                                             )}
-                                            <span className="text-muted-foreground">
-                                                {event.host._count.hostedEvents} event{event.host._count.hostedEvents !== 1 ? "s" : ""} hosted
-                                            </span>
+                                            {event.host.location && (
+                                                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                                    <MapPin className="h-4 w-4 shrink-0" />
+                                                    <span className="break-words">{event.host.location}</span>
+                                                </p>
+                                            )}
+                                            <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-sm">
+                                                {event.host.averageRating && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
+                                                        <span className="font-semibold">{event.host.averageRating.toFixed(1)}</span>
+                                                        <span className="text-muted-foreground">
+                                                            ({event.host._count.reviews} review{event.host._count.reviews !== 1 ? "s" : ""})
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <span className="text-muted-foreground">
+                                                    {event.host._count.hostedEvents} event{event.host._count.hostedEvents !== 1 ? "s" : ""} hosted
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
                             </CardContent>
                         </Card>
 
@@ -221,6 +238,19 @@ async function EventDetailContent({ params }: EventDetailPageProps) {
                                 </CardContent>
                             </Card>
                         )}
+
+                        {/* Review Form - Only shown for past events where user participated */}
+                        <ReviewFormWrapper
+                            eventId={event.id}
+                            eventDate={event.date}
+                            participants={event.participants}
+                        />
+
+                        {/* Event Reviews */}
+                        <EventReviews
+                            eventId={event.id}
+                            currentUserEmail={currentUser?.email || null}
+                        />
                     </div>
 
                     {/* Sidebar */}

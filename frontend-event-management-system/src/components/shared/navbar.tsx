@@ -37,7 +37,7 @@ export function Navbar({ userInfo }: NavbarProps) {
         { href: "/contact", label: "Contact" },
         { href: "/faq", label: "FAQ" },
         ...(userInfo?.role !== "HOST" && userInfo?.role !== "ADMIN"
-            ? [{ href: "/become-a-host", label: "Become a Host" }]
+            ? [{ href: "/dashboard/become-host", label: "Become a Host" }]
             : []),
     ]
 
@@ -68,8 +68,8 @@ export function Navbar({ userInfo }: NavbarProps) {
                             className={cn(
                                 "text-sm font-medium transition-colors",
                                 pathname === link.href
-                                    ? "text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    ? "text-primary font-semibold"
+                                    : "text-muted-foreground hover:text-primary"
                             )}
                         >
                             {link.label}
@@ -81,7 +81,7 @@ export function Navbar({ userInfo }: NavbarProps) {
                     <ModeToggle />
                     {userInfo ? (
                         <>
-                            <Button variant="outline" asChild>
+                            <Button variant="default" className="bg-primary hover:bg-primary/90" asChild>
                                 <Link href={dashboardRoute}>Go to Dashboard</Link>
                             </Button>
                             <DropdownMenu>

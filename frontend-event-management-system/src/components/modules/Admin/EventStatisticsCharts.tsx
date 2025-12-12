@@ -15,6 +15,8 @@ import {
 } from "recharts";
 import { Calendar, TrendingUp, DollarSign } from "lucide-react";
 import { EventStatistics } from "@/services/admin/getEventStatistics";
+import { useTheme } from "next-themes";
+import { useMemo } from "react";
 
 interface EventStatisticsChartsProps {
     stats: EventStatistics;
@@ -23,6 +25,26 @@ interface EventStatisticsChartsProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
 export function EventStatisticsCharts({ stats }: EventStatisticsChartsProps) {
+    const { resolvedTheme } = useTheme();
+
+    // Determine if dark mode is active using useMemo to avoid re-renders
+    const isDark = useMemo(() => {
+        if (resolvedTheme === 'dark') return true;
+        if (resolvedTheme === 'light') return false;
+        // For 'system', check the media query
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+        return false;
+    }, [resolvedTheme]);
+
+    // Theme-aware colors - using darker colors for better contrast in light mode
+    const textColor = isDark ? '#e5e7eb' : '#0f172a'; // Light gray for dark mode, very dark (almost black) for light mode
+    const gridColor = isDark ? '#374151' : '#d1d5db'; // Dark gray for dark mode, light gray for light mode
+    const axisLineColor = isDark ? '#4b5563' : '#9ca3af'; // Border color
+    const tooltipBg = isDark ? '#1f2937' : '#ffffff';
+    const tooltipBorder = isDark ? '#374151' : '#e5e7eb';
+    const tooltipText = isDark ? '#e5e7eb' : '#0f172a';
     // Status breakdown data
     const statusData = [
         { name: 'Open', value: stats.statusBreakdown.open, color: '#00C49F' },
@@ -83,8 +105,8 @@ export function EventStatisticsCharts({ stats }: EventStatisticsChartsProps) {
                                 <div className="mt-4 flex flex-wrap justify-center gap-4">
                                     {statusData.map((item, index) => (
                                         <div key={index} className="flex items-center gap-2">
-                                            <div 
-                                                className="w-3 h-3 rounded-full" 
+                                            <div
+                                                className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: item.color }}
                                             />
                                             <span className="text-sm text-muted-foreground">
@@ -138,8 +160,8 @@ export function EventStatisticsCharts({ stats }: EventStatisticsChartsProps) {
                                 <div className="mt-4 flex justify-center gap-6">
                                     {timeData.map((item, index) => (
                                         <div key={index} className="flex items-center gap-2">
-                                            <div 
-                                                className="w-3 h-3 rounded-full" 
+                                            <div
+                                                className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: item.color }}
                                             />
                                             <span className="text-sm text-muted-foreground">
@@ -172,31 +194,36 @@ export function EventStatisticsCharts({ stats }: EventStatisticsChartsProps) {
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={400}>
-                            <BarChart 
+                            <BarChart
                                 data={eventsByTypeData}
                                 layout="vertical"
                             >
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                <XAxis 
+                                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                                <XAxis
                                     type="number"
-                                    className="text-xs"
-                                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                    tick={{ fill: textColor, fontSize: 12 }}
+                                    axisLine={{ stroke: axisLineColor }}
+                                    tickLine={{ stroke: axisLineColor }}
                                 />
-                                <YAxis 
-                                    dataKey="type" 
+                                <YAxis
+                                    dataKey="type"
                                     type="category"
-                                    className="text-xs"
-                                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                    tick={{ fill: textColor, fontSize: 12 }}
+                                    axisLine={{ stroke: axisLineColor }}
+                                    tickLine={{ stroke: axisLineColor }}
                                     width={120}
                                 />
-                                <Tooltip 
-                                    contentStyle={{ 
-                                        backgroundColor: 'hsl(var(--background))',
-                                        border: '1px solid hsl(var(--border))',
-                                        borderRadius: '8px'
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: tooltipBg,
+                                        border: `1px solid ${tooltipBorder}`,
+                                        borderRadius: '8px',
+                                        color: tooltipText
                                     }}
+                                    itemStyle={{ color: tooltipText }}
+                                    labelStyle={{ color: tooltipText }}
                                 />
-                                <Bar dataKey="count" fill="#8884d8" radius={[0, 8, 8, 0]}>
+                                <Bar dataKey="count" radius={[0, 8, 8, 0]}>
                                     {eventsByTypeData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}

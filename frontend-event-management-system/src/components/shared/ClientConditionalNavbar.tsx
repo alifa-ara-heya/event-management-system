@@ -12,8 +12,10 @@ export function ClientConditionalNavbar() {
     const [authKey, setAuthKey] = useState(0); // Force re-render key
 
     // Hide navbar in dashboard routes
+    // Exclude public host profile routes (UUID pattern)
+    const isPublicHostProfile = /^\/host\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pathname);
     const isDashboardRoute = pathname.startsWith("/dashboard") ||
-        pathname.startsWith("/host") ||
+        (pathname.startsWith("/host") && !isPublicHostProfile) ||
         pathname.startsWith("/admin") ||
         pathname.startsWith("/my-profile");
 

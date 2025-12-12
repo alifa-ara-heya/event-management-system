@@ -331,6 +331,7 @@ const getHostById = async (id: string) => {
                     date: true,
                     location: true,
                     status: true,
+                    image: true,
                     currentParticipants: true,
                     maxParticipants: true
                 },

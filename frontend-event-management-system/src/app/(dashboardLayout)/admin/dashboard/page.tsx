@@ -12,6 +12,9 @@ async function AdminDashboardContent() {
 
     return (
         <div className="space-y-6">
+            {/* Charts Section - Moved to top */}
+            <AdminDashboardCharts stats={stats} />
+
             {/* Stats Cards Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -85,9 +88,6 @@ async function AdminDashboardContent() {
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Charts Section */}
-            <AdminDashboardCharts stats={stats} />
 
             {/* Recent Events */}
             {stats.recentEvents.length > 0 && (

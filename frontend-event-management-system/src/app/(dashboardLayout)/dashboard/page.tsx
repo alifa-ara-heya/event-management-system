@@ -18,6 +18,9 @@ async function UserDashboardContent() {
 
     return (
         <div className="space-y-6">
+            {/* Charts Section - Moved to top */}
+            <DashboardCharts stats={stats} paymentStats={paymentStats} eventActivity={eventActivity} />
+
             {/* Stats Cards Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -77,9 +80,6 @@ async function UserDashboardContent() {
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Charts Section */}
-            <DashboardCharts stats={stats} paymentStats={paymentStats} eventActivity={eventActivity} />
 
             {/* Upcoming Events */}
             {stats.upcomingEvents.length > 0 && (
