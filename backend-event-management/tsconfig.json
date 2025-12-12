@@ -11,12 +11,7 @@
     "moduleResolution": "node",
     "skipLibCheck": true,
     // "ignoreDeprecations": "6.0"
-    "baseUrl": ".",
-    "paths": {
-      "@prisma/client": [
-        "./prisma/generated/prisma/client"
-      ]
-    }
+    "baseUrl": "."
   },
   "include": [
     "src/**/*",
