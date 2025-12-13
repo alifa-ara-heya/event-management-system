@@ -53,6 +53,27 @@ const handleStripeWebhookEvent = catchAsync(async (req: Request, res: Response) 
     });
 });
 
+const getPaymentBySessionId = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const { sessionId } = req.query;
+
+    if (!sessionId || typeof sessionId !== 'string') {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: "Session ID is required"
+        });
+    }
+
+    const result = await PaymentService.getPaymentBySessionId(sessionId, user);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Payment retrieved successfully",
+        data: result
+    });
+});
+
 const getPaymentById = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const user = req.user;
     const { id } = req.params;
@@ -105,6 +126,7 @@ export const PaymentController = {
     createPaymentIntent,
     handleStripeWebhookEvent,
     getPaymentById,
+    getPaymentBySessionId,
     getMyPayments,
     cancelPayment
 };

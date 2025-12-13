@@ -25,6 +25,17 @@ router.post(
     }
 );
 
+// Get payment by session ID (User only - for payment success page)
+// This must come before /:id to avoid route conflicts
+router.get(
+    "/session/:sessionId",
+    auth(UserRole.USER),
+    (req: Request, res: Response, next: NextFunction) => {
+        req.query.sessionId = req.params.sessionId;
+        return PaymentController.getPaymentBySessionId(req as any, res, next);
+    }
+);
+
 // Get payment by ID (User only - own payments)
 router.get(
     "/:id",

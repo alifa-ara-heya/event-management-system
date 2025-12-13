@@ -339,6 +339,32 @@ const handleStripeWebhookEvent = async (event: Stripe.Event) => {
 };
 
 /**
+ * Get payment by session ID (for payment success page)
+ */
+const getPaymentBySessionId = async (sessionId: string, user: IJWTPayload) => {
+    const payment = await prisma.payment.findFirstOrThrow({
+        where: {
+            transactionId: sessionId,
+            userId: user.email
+        },
+        include: {
+            event: {
+                select: {
+                    id: true,
+                    name: true,
+                    date: true,
+                    location: true,
+                    joiningFee: true,
+                    image: true
+                }
+            }
+        }
+    });
+
+    return payment;
+};
+
+/**
  * Get payment by ID
  */
 const getPaymentById = async (paymentId: string, user: IJWTPayload) => {
@@ -443,6 +469,7 @@ export const PaymentService = {
     createPaymentIntent,
     handleStripeWebhookEvent,
     getPaymentById,
+    getPaymentBySessionId,
     getMyPayments,
     cancelPayment
 };
