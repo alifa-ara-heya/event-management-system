@@ -1,6 +1,20 @@
 "use server";
 
-import { serverFetch } from "@/lib/server-fetch";
+// Public fetch for endpoints that don't require authentication
+const publicFetch = async (endpoint: string, options: RequestInit = {}): Promise<Response> => {
+    const BACKEND_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:5000/api/v1";
+    const { headers = {}, ...restOptions } = options;
+
+    const requestHeaders: HeadersInit = {
+        "Content-Type": "application/json",
+        ...headers,
+    };
+
+    return fetch(`${BACKEND_API_URL}${endpoint}`, {
+        headers: requestHeaders,
+        ...restOptions,
+    });
+};
 
 export interface PublicEvent {
     id: string;
@@ -65,8 +79,10 @@ export const getAllEvents = async (params?: GetAllEventsParams): Promise<AllEven
     const queryString = searchParams.toString();
     const endpoint = `/event${queryString ? `?${queryString}` : ""}`;
 
-    const response = await serverFetch.get(endpoint, {
-        next: { revalidate: 0, tags: ["events"] },
+    // Use public fetch since events are public and don't require authentication
+    const response = await publicFetch(endpoint, {
+        method: "GET",
+        next: { revalidate: 60, tags: ["events"] }, // Revalidate every 60 seconds
     });
 
     const result = await response.json();
