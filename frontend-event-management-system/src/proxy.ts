@@ -77,6 +77,11 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL("/", request.url));
     }
 
+    // Rule 0.5: Explicitly allow root path
+    if (pathname === "/") {
+        return NextResponse.next();
+    }
+
     // Rule 1: User is logged in and trying to access auth route. Redirect to default dashboard
     if (accessToken && isAuth) {
         return NextResponse.redirect(
