@@ -1,17 +1,19 @@
 "use server";
 
 // Public fetch for endpoints that don't require authentication
-const publicFetch = async (endpoint: string, options: RequestInit = {}): Promise<Response> => {
+const publicFetch = async (endpoint: string, options: RequestInit & { next?: { revalidate?: number; tags?: string[] } } = {}): Promise<Response> => {
     const BACKEND_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:5000/api/v1";
-    const { headers = {}, ...restOptions } = options;
+    const { headers = {}, next, ...restOptions } = options;
 
     const requestHeaders: HeadersInit = {
         "Content-Type": "application/json",
         ...headers,
     };
 
+    // Use Next.js fetch with caching options if provided
     return fetch(`${BACKEND_API_URL}${endpoint}`, {
         headers: requestHeaders,
+        ...(next ? { next } : {}),
         ...restOptions,
     });
 };
@@ -85,15 +87,28 @@ export const getAllEvents = async (params?: GetAllEventsParams): Promise<AllEven
         next: { revalidate: 60, tags: ["events"] }, // Revalidate every 60 seconds
     });
 
+    if (!response.ok) {
+        // If response is not OK, return empty data instead of throwing
+        console.error(`Failed to fetch events: ${response.status} ${response.statusText}`);
+        return {
+            meta: { page: 1, limit: 10, total: 0 },
+            data: [],
+        };
+    }
+
     const result = await response.json();
 
     if (!result.success) {
-        throw new Error(result.message || "Failed to fetch events");
+        console.error("API returned error:", result.message);
+        return {
+            meta: { page: 1, limit: 10, total: 0 },
+            data: [],
+        };
     }
 
     return {
-        meta: result.meta,
-        data: result.data,
+        meta: result.meta || { page: 1, limit: 10, total: 0 },
+        data: result.data || [],
     };
 };
 

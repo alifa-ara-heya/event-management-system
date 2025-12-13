@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { UserInfo } from "@/services/auth/getUserInfo";
 import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -57,6 +57,7 @@ const DashboardNavbarContent = ({ userInfo }: DashboardNavbarContentProps) => {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="w-64 p-0">
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <DashboardMobileSidebar
                             userInfo={userInfo}
                             navItems={navItems}

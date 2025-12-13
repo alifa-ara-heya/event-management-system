@@ -131,10 +131,12 @@ const FeaturedEvents = async () => {
       includePast: false, // Only show future events
     });
 
-    featuredEvents = eventsData.data.slice(0, 3);
+    featuredEvents = eventsData.data?.slice(0, 3) || [];
   } catch (error) {
+    // Silently handle errors - don't crash the page
     console.error("Error fetching featured events:", error);
     hasError = true;
+    featuredEvents = []; // Ensure it's always an array
   }
 
   return (

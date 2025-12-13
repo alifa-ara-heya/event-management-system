@@ -20,8 +20,15 @@ function decodeJWT(token: string): { role?: UserRole; email?: string } | null {
                 .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
                 .join('')
         );
-        return JSON.parse(jsonPayload);
-    } catch {
+        const decoded = JSON.parse(jsonPayload);
+        // Normalize role to uppercase to match UserRole enum
+        if (decoded.role) {
+            decoded.role = decoded.role.toUpperCase();
+        }
+        console.log("🔐 Decoded JWT payload:", decoded);
+        return decoded;
+    } catch (error) {
+        console.error("❌ Error decoding JWT:", error);
         return null;
     }
 }
@@ -66,15 +73,29 @@ export async function proxy(request: NextRequest) {
         const decoded = decodeJWT(accessToken);
         if (decoded && decoded.role) {
             userRole = decoded.role as UserRole;
+            console.log("✅ Decoded user role:", userRole);
         } else {
             // Invalid token format, clear cookies and redirect to login
             console.log("❌ Invalid token format, redirecting to login");
             return createResponseWithDeletedCookies(new URL('/login', request.url));
         }
+    } else {
+        console.log("⚠️ No access token found");
     }
 
     const routerOwner = getRouteOwner(pathname);
     const isAuth = isAuthRoute(pathname);
+
+    // Debug logging for route matching
+    if (pathname.startsWith('/admin') || pathname.startsWith('/host') || pathname.startsWith('/dashboard')) {
+        console.log("🔍 Route matching:", {
+            pathname,
+            routerOwner,
+            userRole,
+            isAuth,
+            hasAccessToken: !!accessToken,
+        });
+    }
 
     // Rule 0: Handle /logout route - redirect to home (logout is handled by server action)
     if (pathname === "/logout") {
@@ -113,9 +134,21 @@ export async function proxy(request: NextRequest) {
     // Rule 7: User is trying to access role-based protected route
     if (routerOwner === "ADMIN" || routerOwner === "HOST" || routerOwner === "USER") {
         if (userRole !== routerOwner) {
+            console.log("❌ Role mismatch - redirecting:", {
+                pathname,
+                routerOwner,
+                userRole,
+                redirectingTo: getDefaultDashboardRoute(userRole as UserRole),
+            });
             return NextResponse.redirect(
                 new URL(getDefaultDashboardRoute(userRole as UserRole), request.url)
             );
+        } else {
+            console.log("✅ Role match - allowing access:", {
+                pathname,
+                routerOwner,
+                userRole,
+            });
         }
     }
 

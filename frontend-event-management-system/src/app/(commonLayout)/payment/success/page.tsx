@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { serverFetch } from "@/lib/server-fetch";
 
 interface PaymentSuccessPageProps {
     searchParams: Promise<{
@@ -14,6 +15,26 @@ interface PaymentSuccessPageProps {
 async function PaymentSuccessContent({ searchParams }: PaymentSuccessPageProps) {
     const params = await searchParams;
     const sessionId = params.session_id;
+
+    let eventId: string | null = null;
+    let eventName: string | null = null;
+
+    // Fetch payment details to get event ID
+    if (sessionId) {
+        try {
+            const response = await serverFetch.get(`/payment/session/${sessionId}`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data?.event) {
+                    eventId = result.data.event.id;
+                    eventName = result.data.event.name;
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching payment details:", error);
+            // Continue without event details
+        }
+    }
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-2xl">
@@ -26,7 +47,9 @@ async function PaymentSuccessContent({ searchParams }: PaymentSuccessPageProps) 
                     </div>
                     <CardTitle className="text-2xl sm:text-3xl">Payment Successful!</CardTitle>
                     <CardDescription className="text-base mt-2">
-                        Thank you for your payment. The webhook will process your event registration shortly.
+                        {eventName
+                            ? `Thank you for joining "${eventName}"! Your payment has been processed successfully.`
+                            : "Thank you for your payment. The webhook will process your event registration shortly."}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -37,12 +60,25 @@ async function PaymentSuccessContent({ searchParams }: PaymentSuccessPageProps) 
                         </div>
                     )}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Button asChild variant="default">
-                            <Link href="/events">Explore More Events</Link>
-                        </Button>
-                        <Button asChild variant="outline">
-                            <Link href="/dashboard/my-events">View My Events</Link>
-                        </Button>
+                        {eventId ? (
+                            <>
+                                <Button asChild variant="default">
+                                    <Link href={`/events/${eventId}`}>View Event Details</Link>
+                                </Button>
+                                <Button asChild variant="outline">
+                                    <Link href="/dashboard/my-events">View My Events</Link>
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button asChild variant="default">
+                                    <Link href="/events">Explore More Events</Link>
+                                </Button>
+                                <Button asChild variant="outline">
+                                    <Link href="/dashboard/my-events">View My Events</Link>
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </CardContent>
             </Card>

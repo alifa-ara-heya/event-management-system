@@ -52,11 +52,15 @@ const DashboardMobileSidebar = ({
                                             key={item.href}
                                             href={item.href}
                                             className={cn(
-                                                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                                                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all cursor-pointer",
                                                 isActive
                                                     ? "bg-primary text-primary-foreground"
                                                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                             )}
+                                            onClick={(e) => {
+                                                // Debug: log navigation attempts
+                                                console.log("Navigating to:", item.href);
+                                            }}
                                         >
                                             <Icon className="h-4 w-4" />
                                             <span className="flex-1">{item.title}</span>
