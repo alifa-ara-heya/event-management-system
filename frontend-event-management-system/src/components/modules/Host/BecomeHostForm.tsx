@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Field } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Loader2, Upload, X, UserCheck } from "lucide-react";
 import Image from "next/image";
 
@@ -42,6 +42,7 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
             const submitFormData = new FormData();
 
             // Build data object with only fields that have values
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data: any = {};
             if (formData.name) data.name = formData.name;
             if (formData.contactNumber) data.contactNumber = formData.contactNumber;
@@ -73,6 +74,7 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
                 router.push("/dashboard");
                 router.refresh();
             }, 1500);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Error submitting host request:", error);
             toast.error(error.message || "Failed to submit host request. Please try again.");
@@ -112,11 +114,10 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <Field
-                        label="Name"
-                        required={false}
-                    >
+                    <Field>
+                        <FieldLabel htmlFor="name">Name</FieldLabel>
                         <Input
+                            id="name"
                             name="name"
                             type="text"
                             placeholder="Your display name"
@@ -126,11 +127,10 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
                         />
                     </Field>
 
-                    <Field
-                        label="Contact Number"
-                        required={false}
-                    >
+                    <Field>
+                        <FieldLabel htmlFor="contactNumber">Contact Number</FieldLabel>
                         <Input
+                            id="contactNumber"
                             name="contactNumber"
                             type="tel"
                             placeholder="Your contact number"
@@ -140,11 +140,10 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
                         />
                     </Field>
 
-                    <Field
-                        label="Bio"
-                        required={false}
-                    >
+                    <Field>
+                        <FieldLabel htmlFor="bio">Bio</FieldLabel>
                         <Textarea
+                            id="bio"
                             name="bio"
                             placeholder="Tell us about yourself and why you want to become a host..."
                             rows={4}
@@ -154,11 +153,10 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
                         />
                     </Field>
 
-                    <Field
-                        label="Location"
-                        required={false}
-                    >
+                    <Field>
+                        <FieldLabel htmlFor="location">Location</FieldLabel>
                         <Input
+                            id="location"
                             name="location"
                             type="text"
                             placeholder="Your location"
@@ -168,10 +166,8 @@ export function BecomeHostForm({ userProfile }: BecomeHostFormProps) {
                         />
                     </Field>
 
-                    <Field
-                        label="Profile Photo"
-                        required={false}
-                    >
+                    <Field>
+                        <FieldLabel>Profile Photo</FieldLabel>
                         <div className="space-y-4">
                             {photoPreview && (
                                 <div className="relative w-32 h-32 rounded-lg overflow-hidden border">

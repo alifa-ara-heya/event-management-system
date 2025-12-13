@@ -24,7 +24,7 @@ export const loginUser = async (_currentState: any, formData: FormData): Promise
             return validationResult;
         }
 
-        const validatedPayload = validationResult.data;
+        const validatedPayload = validationResult.data as { email: string; password: string };
 
         console.log("🔐 Attempting login for:", validatedPayload.email);
 
