@@ -19,8 +19,8 @@ app.post(
 );
 
 app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
+    origin: ['http://localhost:3000', 'https://event-management-system-pi-livid.vercel.app'],
+    credentials: true,
 }));
 
 app.use(express.json());
